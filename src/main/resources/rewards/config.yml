@@ -1,0 +1,258 @@
+# ========================================
+# 村民赠礼系统 - 全局配置
+# ========================================
+# 此文件包含村民赠礼的全局设置
+# 各个职业的具体奖励配置请查看 rewards/<职业>.yml
+
+# ============================================
+# 灾厄强化设置
+# ============================================
+enhancement:
+  # ✅ 附魔规则配置
+  rules:
+    # 是否启用自定义附魔规则
+    enabled: true
+    # 默认附魔等级上限
+    default-max-level: 5
+    
+    # ✅ 工具通用附魔
+    tool-common:
+      - efficiency
+      - unbreaking
+      - mending
+    
+    # ✅ 镐子专属附魔
+    pickaxe-exclusive:
+      - fortune
+      - silk_touch
+    
+    # ✅ 铲子专属附魔
+    shovel-exclusive:
+      - fortune
+      - silk_touch
+    
+    # ✅ 斧头允许附魔
+    axe-allowed:
+      - sharpness
+      - smite
+      - bane_of_arthropods
+      - knockback
+      - fire_aspect
+      - looting
+    
+    # ✅ 锄头允许附魔
+    hoe-allowed:
+      - fortune
+      - silk_touch
+    
+    # ✅ 武器通用附魔
+    weapon-common:
+      - sharpness
+      - smite
+      - bane_of_arthropods
+      - knockback
+      - fire_aspect
+      - looting
+      - unbreaking
+      - mending
+    
+    # ✅ 弓允许附魔
+    bow-allowed:
+      - power
+      - punch
+      - flame
+      - infinity
+      - unbreaking
+      - mending
+    
+    # ✅ 弩允许附魔
+    crossbow-allowed:
+      - quick_charge
+      - multishot
+      - piercing
+      - unbreaking
+      - mending
+    
+    # ✅ 三叉戟允许附魔
+    trident-allowed:
+      - loyalty
+      - riptide
+      - channeling
+      - unbreaking
+      - mending
+    
+    # ✅ 钓鱼竿允许附魔
+    fishing-rod-allowed:
+      - lure
+      - luck_of_the_sea
+      - unbreaking
+      - mending
+    
+    # ✅ 盾牌允许附魔
+    shield-allowed:
+      - unbreaking
+      - mending
+    
+    # ✅ 鞘翅允许附魔
+    elytra-allowed:
+      - unbreaking
+      - mending
+    
+    # ✅ 盔甲通用附魔
+    armor-generic:
+      - protection
+      - fire_protection
+      - blast_protection
+      - projectile_protection
+      - thorns
+      - unbreaking
+      - mending
+    
+    # ✅ 头盔专属附魔
+    helmet-exclusive:
+      - respiration
+      - aqua_affinity
+    
+    # ✅ 靴子专属附魔
+    boots-exclusive:
+      - feather_falling
+      - depth_strider
+      - frost_walker
+      - soul_speed
+      - swift_sneak
+    
+    # ✅ 互斥附魔组
+    mutually-exclusive:
+      # 保护类互斥
+      protection-types:
+        - protection
+        - fire_protection
+        - blast_protection
+        - projectile_protection
+      # 时运/精准采集互斥
+      fortune-silk:
+        - fortune
+        - silk_touch
+      # 激流/忠诚互斥
+      riptide-loyalty:
+        - riptide
+        - loyalty
+      # 激流/穿透互斥
+      riptide-piercing:
+        - riptide
+        - piercing
+  
+  # ✅ 附魔数量配置（各职业在不同英雄等级下的基础附魔数量）
+  enchant-counts:
+    librarian: { 6: 2, 7: 2, 8: 2, 9: 3, 10: 5 }
+    armorer: { 6: 1, 7: 1, 8: 2, 9: 3, 10: 5 }
+    smith: { 6: 1, 7: 1, 8: 2, 9: 3, 10: 5 }
+  
+  # 物品最大强化次数（超过此次数后无法再使用灾厄之种）
+  max-enhance-count: 3
+  # 不可强化的附魔列表（黑名单）
+  blacklist:
+    - mending        # 经验修补
+    - silk_touch     # 精准采集
+    - aqua_affinity  # 水下速掘
+    - channeling     # 引雷
+    - flame          # 火矢
+    - infinity       # 无限
+    - multishot      # 多重射击
+  
+  # ✅ 灾厄之种强化概率配置
+  seeds:
+    # 灾厄之种 I 配置
+    seed-1:
+      # 显示名称匹配（用于识别种子类型）
+      name: "灾厄之种I"
+      # 概率配置 (总和必须为 1.0)
+      chances:
+        # 70% 概率强化 1 次
+        1: 0.7
+        # 30% 概率强化 2 次
+        2: 0.3
+      # 成书内容配置（右键书籍显示）
+      book:
+        # 书名
+        title: "§4§l灾厄之种"
+        # 作者
+        author: "§8远古灾厄"
+        # 书页内容（每段一行）
+        pages:
+          - "§4§l灾厄之种\n\n§7这本泛黄的书页上\n记载着远古灾厄之力\n的残片。\n\n§8将其放入倒置信标的\n强化槽中，可以唤醒\n装备中沉睡的力量。"
+    
+    # 灾厄之种 II 配置
+    seed-2:
+      # 显示名称匹配（用于识别种子类型）
+      name: "灾厄之种II"
+      # 概率配置 (总和必须为 1.0)
+      chances:
+        # 20% 概率强化 1 次
+        1: 0.20
+        # 70% 概率强化 2 次
+        2: 0.70
+        # 9.9% 概率强化 3 次
+        3: 0.099
+        # 0.1% 概率强化 4 次
+        4: 0.001
+      # 成书内容配置
+      book:
+        title: "§6§l灾厄之种·贰"
+        author: "§c深渊主宰"
+        pages:
+          - "§6§l=== 远古铭文 ===\n\n§5「当灾厄之种在\n   ■■■中苏醒，\n   群星将为之\n   黯然失色。」\n\n§8——来自深渊的\n   低语..."
+  
+  # ✅ 灾厄强化专属附魔上限配置 (优先级高于 rewards.yml)
+  # 格式：附魔 ID: 等级上限
+  limits:
+    # 工具类
+    efficiency: 10       # 效率上限 10
+    fortune: 5           # 时运上限 5
+    # 武器类
+    sharpness: 10        # 锋利上限 10
+    smite: 10            # 亡灵杀手上限 10
+    bane_of_arthropods: 10 # 节肢杀手上限 10
+    knockback: 5         # 击退上限 5
+    fire_aspect: 5       # 火焰附加上限 5
+    looting: 5           # 抢夺上限 5
+    sweeping_edge: 3     # 横扫之刃上限 3
+    # 盔甲类
+    protection: 8        # 保护上限 8
+    fire_protection: 6   # 火焰保护上限 6
+    blast_protection: 6  # 爆炸保护上限 6
+    projectile_protection: 6 # 弹射物保护上限 6
+
+# ============================================
+# 可用职业列表
+# ============================================
+# armorer:      盔甲匠
+# butcher:      屠夫
+# cartographer: 制图师
+# cleric:       牧师
+# farmer:       农民
+# fisherman:    渔夫
+# fletcher:     制箭师
+# leatherworker: 皮匠
+# librarian:    图书管理员
+# mason:        石匠
+# shepherd:     牧羊人
+# toolsmith:    工具匠
+# weaponsmith:  武器匠
+# nitwit:       傻子村民
+# 
+# 每个职业的详细奖励配置请查看对应的文件：
+# - rewards/armorer.yml
+# - rewards/butcher.yml
+# - rewards/cartographer.yml
+# - rewards/cleric.yml
+# - rewards/farmer.yml
+# - rewards/fisherman.yml
+# - rewards/fletcher.yml
+# - rewards/leatherworker.yml
+# - rewards/librarian.yml
+# - rewards/mason.yml
+# - rewards/shepherd.yml
+# - rewards/toolsmith.yml
+# - rewards/weaponsmith.yml
+# - rewards/nitwit.yml

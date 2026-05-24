@@ -1,0 +1,208 @@
+# ============================================
+# 村民职业奖励配置 - 盔甲匠 (Armorer)
+# ============================================
+# 盔甲匠提供盔甲装备奖励
+
+armorer:
+  # ✅ 彩蛋级（灾厄 6 级）- 只有绿宝石
+  villager-hero-6:
+    enabled: true
+    rewards:
+      - material: EMERALD
+        amount: 6-10
+        chance: 1.0
+  
+  # 7级灾厄奖励 - 锁链甲装备（随机部位）
+  villager-hero-7:
+    enabled: true
+    rewards:
+      - material: CHAINMAIL_HELMET
+        amount: 1
+        chance: 0.075
+        display-name: "§e锁链头盔"
+      - material: CHAINMAIL_CHESTPLATE
+        amount: 1
+        chance: 0.075
+        display-name: "§e锁链胸甲"
+      - material: CHAINMAIL_LEGGINGS
+        amount: 1
+        chance: 0.075
+        display-name: "§e锁链护腿"
+      - material: CHAINMAIL_BOOTS
+        amount: 1
+        chance: 0.075
+        display-name: "§e锁链靴子"
+      - material: EMERALD
+        amount: 1-2
+        chance: 0.7
+
+  # 8级灾厄奖励 - 铁甲装备（随机部位）
+  villager-hero-8:
+    enabled: true
+    rewards:
+      - material: IRON_HELMET
+        amount: 1
+        chance: 0.075
+        display-name: "§a铁头盔"
+      - material: IRON_CHESTPLATE
+        amount: 1
+        chance: 0.075
+        display-name: "§a铁胸甲"
+      - material: IRON_LEGGINGS
+        amount: 1
+        chance: 0.075
+        display-name: "§a铁护腿"
+      - material: IRON_BOOTS
+        amount: 1
+        chance: 0.075
+        display-name: "§a铁靴子"
+      - material: EMERALD
+        amount: 2-5
+        chance: 0.7
+
+  # 9级灾厄奖励 - 钻石装备（随机部位）
+  villager-hero-9:
+    enabled: true
+    rewards:
+      - material: DIAMOND_HELMET
+        amount: 1
+        chance: 0.075
+        display-name: "§b钻石头盔"
+      - material: DIAMOND_CHESTPLATE
+        amount: 1
+        chance: 0.075
+        display-name: "§b钻石胸甲"
+      - material: DIAMOND_LEGGINGS
+        amount: 1
+        chance: 0.075
+        display-name: "§b钻石护腿"
+      - material: DIAMOND_BOOTS
+        amount: 1
+        chance: 0.075
+        display-name: "§b钻石靴子"
+      - material: EMERALD
+        amount: 5-10
+        chance: 0.7
+
+  # 10级灾厄奖励 - 下界合金装备（随机部位，附带顶级附魔）
+  villager-hero-10:
+    enabled: true
+    rewards:
+      - material: NETHERITE_HELMET
+        amount: 1
+        chance: 0.06
+        display-name: "§4§l下界合金头盔"
+        enchantment-type: armorer
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+          - AQUA_AFFINITY          # 水下速掘 I (保持 I)
+        enchantments:
+          possible-enchantments:
+            - PROTECTION:1         # 保护 1-4 随机
+            - PROTECTION:2
+            - PROTECTION:3
+            - PROTECTION:4
+            - RESPIRATION:1        # 水下呼吸 1-3 随机
+            - RESPIRATION:2
+            - RESPIRATION:3
+            - AQUA_AFFINITY:1      # 水下速掘固定 I 级
+            - UNBREAKING:1         # 耐久 1-3 随机
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - MENDING:1            # 经验修补固定 I 级
+      - material: NETHERITE_CHESTPLATE
+        amount: 1
+        chance: 0.06
+        display-name: "§4§l下界合金胸甲"
+        enchantment-type: armorer
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+        enchantments:
+          possible-enchantments:
+            - PROTECTION:1         # 保护 1-4 随机
+            - PROTECTION:2
+            - PROTECTION:3
+            - PROTECTION:4
+            - FIRE_PROTECTION:1    # 火焰保护 1-4 随机
+            - FIRE_PROTECTION:2
+            - FIRE_PROTECTION:3
+            - FIRE_PROTECTION:4
+            - BLAST_PROTECTION:1   # 爆炸保护 1-4 随机
+            - BLAST_PROTECTION:2
+            - BLAST_PROTECTION:3
+            - BLAST_PROTECTION:4
+            - PROJECTILE_PROTECTION:1  # 弹射物保护 1-4 随机
+            - PROJECTILE_PROTECTION:2
+            - PROJECTILE_PROTECTION:3
+            - PROJECTILE_PROTECTION:4
+            - UNBREAKING:1         # 耐久 1-3 随机
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - MENDING:1            # 经验修补固定 I 级
+      - material: NETHERITE_LEGGINGS
+        amount: 1
+        chance: 0.06
+        display-name: "§4§l下界合金护腿"
+        enchantment-type: armorer
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+        enchantments:
+          possible-enchantments:
+            - PROTECTION:1         # 保护 1-4 随机
+            - PROTECTION:2
+            - PROTECTION:3
+            - PROTECTION:4
+            - FIRE_PROTECTION:1    # 火焰保护 1-4 随机
+            - FIRE_PROTECTION:2
+            - FIRE_PROTECTION:3
+            - FIRE_PROTECTION:4
+            - BLAST_PROTECTION:1   # 爆炸保护 1-4 随机
+            - BLAST_PROTECTION:2
+            - BLAST_PROTECTION:3
+            - BLAST_PROTECTION:4
+            - PROJECTILE_PROTECTION:1  # 弹射物保护 1-4 随机
+            - PROJECTILE_PROTECTION:2
+            - PROJECTILE_PROTECTION:3
+            - PROJECTILE_PROTECTION:4
+            - UNBREAKING:1         # 耐久 1-3 随机
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - MENDING:1            # 经验修补固定 I 级
+      - material: NETHERITE_BOOTS
+        amount: 1
+        chance: 0.06
+        display-name: "§4§l下界合金靴子"
+        enchantment-type: armorer
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+          - FROST_WALKER           # 冰霜行者 II (保持 II)
+        enchantments:
+          possible-enchantments:
+            - PROTECTION:1         # 保护 1-4 随机
+            - PROTECTION:2
+            - PROTECTION:3
+            - PROTECTION:4
+            - FEATHER_FALLING:1    # 摔落缓冲 1-4 随机
+            - FEATHER_FALLING:2
+            - FEATHER_FALLING:3
+            - FEATHER_FALLING:4
+            - FROST_WALKER:1       # 冰霜行者 1-2 随机
+            - FROST_WALKER:2
+            - SOUL_SPEED:1         # 灵魂疾行 1-3 随机
+            - SOUL_SPEED:2
+            - SOUL_SPEED:3
+            - SWIFT_SNEAK:1        # 迅捷潜行 1-3 随机
+            - SWIFT_SNEAK:2
+            - SWIFT_SNEAK:3
+            - UNBREAKING:1         # 耐久 1-3 随机
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - MENDING:1            # 经验修补固定 I 级
+      # 稀有奖励：鞘翅
+      - material: ELYTRA
+        amount: 1
+        chance: 0.08
+        display-name: "§5§l鞘翅"
+      - material: EMERALD
+        amount: 15-30
+        chance: 0.64

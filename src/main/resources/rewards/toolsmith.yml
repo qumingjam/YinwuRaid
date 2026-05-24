@@ -1,0 +1,167 @@
+# ============================================
+# 村民职业奖励配置 - 工具匠 (Toolsmith)
+# ============================================
+# 工具匠提供工具类装备奖励
+
+toolsmith:
+  # ✅ 彩蛋级（灾厄 6 级）- 只有绿宝石
+  villager-hero-6:
+    enabled: true
+    rewards:
+      - material: EMERALD
+        amount: 6-10
+        chance: 1.0
+  
+  # 7级灾厄奖励 - 石制工具（随机类型）
+  villager-hero-7:
+    enabled: true
+    rewards:
+      - material: STONE_PICKAXE
+        amount: 1
+        chance: 0.133
+        display-name: "§e石镐"
+      - material: STONE_AXE
+        amount: 1
+        chance: 0.133
+        display-name: "§e石锄"
+      - material: STONE_SHOVEL
+        amount: 1
+        chance: 0.134
+        display-name: "§e石锹"
+      - material: EMERALD
+        amount: 1-2
+        chance: 0.6
+
+  # 8级灾厄奖励 - 铁制工具（随机类型）
+  villager-hero-8:
+    enabled: true
+    rewards:
+      - material: IRON_PICKAXE
+        amount: 1
+        chance: 0.133
+        display-name: "§a铁镐"
+      - material: IRON_AXE
+        amount: 1
+        chance: 0.133
+        display-name: "§a铁锄"
+      - material: IRON_SHOVEL
+        amount: 1
+        chance: 0.134
+        display-name: "§a铁锹"
+      - material: EMERALD
+        amount: 2-5
+        chance: 0.6
+
+  # 9级灾厄奖励 - 钻石工具（随机类型）
+  villager-hero-9:
+    enabled: true
+    rewards:
+      - material: DIAMOND_PICKAXE
+        amount: 1
+        chance: 0.1
+        display-name: "§b钻石镐"
+      - material: DIAMOND_AXE
+        amount: 1
+        chance: 0.1
+        display-name: "§b钻石锄"
+      - material: DIAMOND_SHOVEL
+        amount: 1
+        chance: 0.1
+        display-name: "§b钻石锹"
+      - material: EMERALD
+        amount: 5-10
+        chance: 0.7
+
+  # 10级灾厄奖励 - 下界合金工具（随机类型）
+  villager-hero-10:
+    enabled: true
+    rewards:
+      - material: NETHERITE_PICKAXE
+        amount: 1
+        chance: 0.06
+        display-name: "§4§l下界合金镐"
+        enchantment-type: smith
+        excluded-enchantments:
+          - MENDING              # 经验修补 I (保持 I)
+          - SILK_TOUCH           # 精准采集 I (保持 I，不被强化)
+        enchantments:
+          possible-enchantments:
+            - EFFICIENCY:1
+            - EFFICIENCY:2
+            - EFFICIENCY:3
+            - EFFICIENCY:4
+            - EFFICIENCY:5
+            - UNBREAKING:1
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - FORTUNE:1
+            - FORTUNE:2
+            - FORTUNE:3
+            - SILK_TOUCH:1
+            - MENDING:1
+      - material: NETHERITE_AXE
+        amount: 1
+        chance: 0.06
+        display-name: "§4§l下界合金锄"
+        enchantment-type: smith
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+          - SILK_TOUCH             # 精准采集 I (保持 I，不被强化)
+        enchantments:
+          possible-enchantments:
+            - EFFICIENCY:1
+            - EFFICIENCY:2
+            - EFFICIENCY:3
+            - EFFICIENCY:4
+            - EFFICIENCY:5
+            - UNBREAKING:1
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - FORTUNE:1
+            - FORTUNE:2
+            - FORTUNE:3
+            - SILK_TOUCH:1
+            - MENDING:1
+      - material: NETHERITE_SHOVEL
+        amount: 1
+        chance: 0.06
+        display-name: "§4§l下界合金锹"
+        enchantment-type: smith
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+          - SILK_TOUCH             # 精准采集 I (保持 I，不被强化)
+        enchantments:
+          possible-enchantments:
+            - EFFICIENCY:1
+            - EFFICIENCY:2
+            - EFFICIENCY:3
+            - EFFICIENCY:4
+            - EFFICIENCY:5
+            - UNBREAKING:1
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - SILK_TOUCH:1
+            - MENDING:1
+      # 稀有奖励：极品钓鱼竿
+      - material: FISHING_ROD
+        amount: 1
+        chance: 0.08
+        display-name: "§5§l深海传奇钓竿"
+        enchantment-type: smith
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+        enchantments:
+          possible-enchantments:
+            - LUCK_OF_THE_SEA:1
+            - LUCK_OF_THE_SEA:2
+            - LUCK_OF_THE_SEA:3
+            - LURE:1
+            - LURE:2
+            - LURE:3
+            - UNBREAKING:1
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - MENDING:1
+      - material: EMERALD
+        amount: 15-30
+        chance: 0.74

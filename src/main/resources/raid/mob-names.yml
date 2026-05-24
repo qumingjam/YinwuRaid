@@ -1,0 +1,27 @@
+# ========================================
+# 灾厄袭击 - 怪物中文名称映射
+# ========================================
+# 用于在 GUI 和消息中显示怪物的中文名称
+
+mob-names:
+  ZOMBIE: "灾厄僵尸"
+  SKELETON: "灾厄骷髅"
+  STRAY: "灾厄流浪者"
+  SPIDER: "灾厄蜘蛛"
+  CAVE_SPIDER: "灾厄洞穴蜘蛛"
+  WITCH: "灾厄女巫"
+  VINDICATOR: "灾厄卫道士"
+  PILLAGER: "灾厄掠夺者"
+  EVOKER: "灾厄唤魔者"
+  ILLUSIONER: "灾厄幻术师"
+  RAVAGER: "灾厄劫掠兽"
+  ZOMBIFIED_PIGLIN: "灾厄僵尸猪灵"
+  ZOGLIN: "灾厄僵尸疣猪兽"
+  BLAZE: "灾厄烈焰人"
+  GHAST: "灾厄恶魂"
+  DROWNED: "灾厄溺尸"
+  HUSK: "灾厄尸壳"
+  VEX: "灾厄恼鬼"
+  # ✅ 彩蛋级专属怪物
+  SLIME: "灾厄史莱姆"
+  CREEPER: "灾厄苦力怕"

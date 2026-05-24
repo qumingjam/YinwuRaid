@@ -1,0 +1,54 @@
+# ============================================
+# 村民职业奖励配置 - 制图师 (Cartographer)
+# ============================================
+# 制图师提供地图和导航相关物品奖励
+
+cartographer:
+  villager-hero-6:
+    enabled: true
+    rewards:
+      - material: EMERALD
+        amount: 6-10
+        chance: 1.0
+  
+  villager-hero-7:
+    enabled: true
+    rewards:
+      - material: MAP
+        amount: 1
+        chance: 0.4
+      - material: PAPER
+        amount: 2-5
+        chance: 0.6
+
+  villager-hero-8:
+    enabled: true
+    rewards:
+      - material: COMPASS
+        amount: 1
+        chance: 0.3
+      - material: EMERALD
+        amount: 2-5
+        chance: 0.7
+
+  villager-hero-9:
+    enabled: true
+    rewards:
+      - material: FILLED_MAP
+        amount: 1
+        chance: 0.3
+        display-name: "§b海洋地图"
+      - material: EMERALD
+        amount: 5-10
+        chance: 0.7
+
+  villager-hero-10:
+    enabled: true
+    rewards:
+      - material: ELYTRA
+        amount: 1
+        chance: 0.05
+        display-name: "§b§l鞘翅"
+      - material: EMERALD
+        amount: 15-30
+        chance: 0.95

@@ -1,0 +1,212 @@
+# ============================================
+# 村民职业奖励配置 - 武器匠 (Weaponsmith)
+# ============================================
+# 武器匠提供武器类装备奖励
+
+weaponsmith:
+  # ✅ 彩蛋级（灾厄 6 级）- 只有绿宝石
+  villager-hero-6:
+    enabled: true
+    rewards:
+      - material: EMERALD
+        amount: 6-10
+        chance: 1.0
+  
+  # 7级灾厄奖励 - 石制武器（随机类型）
+  villager-hero-7:
+    enabled: true
+    rewards:
+      - material: STONE_SWORD
+        amount: 1
+        chance: 0.133
+        display-name: "§e石剑"
+      - material: STONE_AXE
+        amount: 1
+        chance: 0.133
+        display-name: "§e石斧"
+      - material: STONE_SPEAR
+        amount: 1
+        chance: 0.134
+        display-name: "§e石矛"
+      - material: EMERALD
+        amount: 1-2
+        chance: 0.6
+
+  # 8级灾厄奖励 - 铁制武器（随机类型）
+  villager-hero-8:
+    enabled: true
+    rewards:
+      - material: IRON_SWORD
+        amount: 1
+        chance: 0.133
+        display-name: "§a铁剑"
+      - material: IRON_AXE
+        amount: 1
+        chance: 0.133
+        display-name: "§a铁斧"
+      - material: IRON_SPEAR
+        amount: 1
+        chance: 0.134
+        display-name: "§a铁矛"
+      - material: EMERALD
+        amount: 2-5
+        chance: 0.6
+
+  # 9级灾厄奖励 - 钻石武器（随机类型）
+  villager-hero-9:
+    enabled: true
+    rewards:
+      - material: DIAMOND_SWORD
+        amount: 1
+        chance: 0.1
+        display-name: "§b钻石剑"
+      - material: DIAMOND_AXE
+        amount: 1
+        chance: 0.1
+        display-name: "§b钻石斧"
+      - material: DIAMOND_SPEAR
+        amount: 1
+        chance: 0.1
+        display-name: "§b钻石矛"
+      - material: EMERALD
+        amount: 5-10
+        chance: 0.7
+
+  # 10级灾厄奖励 - 下界合金武器（随机类型，附带顶级附魔）
+  villager-hero-10:
+    enabled: true
+    rewards:
+      - material: NETHERITE_SWORD
+        amount: 1
+        chance: 0.06
+        display-name: "§4§l下界合金剑"
+        enchantment-type: smith
+        excluded-enchantments:
+          - MENDING                   # 经验修补 I (保持 I)
+          - LOOTING                   # 抢夺 III (保持 III)
+          - FIRE_ASPECT               # 火焰附加 II (保持 II)
+        enchantments:
+          possible-enchantments:
+            - SHARPNESS:1
+            - SHARPNESS:2
+            - SHARPNESS:3
+            - SHARPNESS:4
+            - SHARPNESS:5
+            - SMITE:1
+            - SMITE:2
+            - SMITE:3
+            - SMITE:4
+            - SMITE:5
+            - BANE_OF_ARTHROPODS:1
+            - BANE_OF_ARTHROPODS:2
+            - BANE_OF_ARTHROPODS:3
+            - BANE_OF_ARTHROPODS:4
+            - BANE_OF_ARTHROPODS:5
+            - UNBREAKING:1
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - MENDING:1
+      - material: NETHERITE_AXE
+        amount: 1
+        chance: 0.06
+        display-name: "§4§l下界合金斧"
+        enchantment-type: smith
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+        enchantments:
+          possible-enchantments:
+            - SHARPNESS:1
+            - SHARPNESS:2
+            - SHARPNESS:3
+            - SHARPNESS:4
+            - SHARPNESS:5
+            - EFFICIENCY:1
+            - EFFICIENCY:2
+            - EFFICIENCY:3
+            - EFFICIENCY:4
+            - EFFICIENCY:5
+            - UNBREAKING:1
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - MENDING:1
+      - material: NETHERITE_SPEAR
+        amount: 1
+        chance: 0.06
+        display-name: "§4§l下界合金矛"
+        enchantment-type: smith
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+        enchantments:
+          possible-enchantments:
+            - SHARPNESS:1
+            - SHARPNESS:2
+            - SHARPNESS:3
+            - SHARPNESS:4
+            - SHARPNESS:5
+            - KNOCKBACK:1
+            - KNOCKBACK:2
+            - UNBREAKING:1
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - MENDING:1
+      # 稀有奖励：重锤（使用下界合金镐模拟）
+      - material: NETHERITE_PICKAXE
+        amount: 1
+        chance: 0.08
+        display-name: "§5§l重型战锤"
+        enchantment-type: smith
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+        enchantments:
+          possible-enchantments:
+            - SHARPNESS:1
+            - SHARPNESS:2
+            - SHARPNESS:3
+            - SHARPNESS:4
+            - SHARPNESS:5
+            - SMITE:1
+            - SMITE:2
+            - SMITE:3
+            - SMITE:4
+            - SMITE:5
+            - BANE_OF_ARTHROPODS:1
+            - BANE_OF_ARTHROPODS:2
+            - BANE_OF_ARTHROPODS:3
+            - BANE_OF_ARTHROPODS:4
+            - BANE_OF_ARTHROPODS:5
+            - EFFICIENCY:1
+            - EFFICIENCY:2
+            - EFFICIENCY:3
+            - EFFICIENCY:4
+            - EFFICIENCY:5
+            - UNBREAKING:1
+            - UNBREAKING:2
+            - UNBREAKING:3
+            - MENDING:1
+      # 稀有奖励：三叉戟
+      - material: TRIDENT
+        amount: 1
+        chance: 0.08
+        display-name: "§5§l三叉戟"
+        enchantment-type: smith
+        excluded-enchantments:
+          - MENDING                # 经验修补 I (保持 I)
+          - CHANNELING             # 引雷 I (保持 I)
+        enchantments:
+          possible-enchantments:
+            - IMPALING:1
+            - IMPALING:2
+            - IMPALING:3
+            - IMPALING:4
+            - IMPALING:5
+            - LOYALTY:1
+            - LOYALTY:2
+            - LOYALTY:3
+            - CHANNELING:1
+            - RIPTIDE:1
+            - RIPTIDE:2
+            - RIPTIDE:3
+            - MENDING:1
+      - material: EMERALD
+        amount: 15-30
+        chance: 0.66
