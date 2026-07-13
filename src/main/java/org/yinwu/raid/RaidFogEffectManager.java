@@ -73,7 +73,7 @@ public class RaidFogEffectManager {
 
                 Bukkit.getRegionScheduler().run(plugin, center, (regionTask) -> {
                     try {
-                        Random random = new Random();
+                        Random random = ThreadLocalRandom.current();
                         int particleCount = fogParticleCount / 3;
 
                         for (int i = 0; i < particleCount; i++) {
@@ -145,7 +145,7 @@ public class RaidFogEffectManager {
 
                 Bukkit.getRegionScheduler().run(plugin, center, (regionTask) -> {
                     try {
-                        Random random = new Random();
+                        Random random = ThreadLocalRandom.current();
                         int particleCount = fogParticleCount / 3;
 
                         for (int i = 0; i < particleCount; i++) {

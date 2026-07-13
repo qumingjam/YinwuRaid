@@ -1,6 +1,7 @@
 package org.yinwu;
 
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.event.HandlerList;
 import org.bukkit.Bukkit;
 import org.yinwu.beacon.InvertedBeaconDetector;
 import org.yinwu.beacon.BeaconInteractionListener;
@@ -159,6 +160,7 @@ public class YinwuRaidPlugin extends JavaPlugin {
             }
         }
         
+        HandlerList.unregisterAll(this);
         getLogger().info("§6[YinwuRaid] §c插件已安全禁用");
     }
     

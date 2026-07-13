@@ -748,7 +748,7 @@ public class SpecialRaidListener implements Listener {
 
     private void createRaidBossBar(Player player, Location center, int doomLevel, int radius,
                                    int totalWaves, int mobsPerWave) {
-        RaidState raidState = new RaidState(totalWaves, mobsPerWave, waveDelay, mobInterval, doomLevel);
+        RaidState raidState = new RaidState(totalWaves, mobsPerWave, waveDelay, mobInterval, doomLevel, center, player.getUniqueId());
         raidStates.put(player.getUniqueId(), raidState);
 
         String raidName = String.format("§4§l灾厄袭击 §r§7- %s §r§c波次：%d/%d",
@@ -1367,6 +1367,38 @@ public class SpecialRaidListener implements Listener {
             if (healthTask != null) {
                 healthTask.cancel();
             }
+
+            // 事件驱动：找到所属袭击，减少存活计数，如果归零则推进波次
+            for (RaidState rs : raidStates.values()) {
+                if (rs.isActive && rs.raidMobs.remove(entityId)) {
+                    int remaining = rs.aliveMobs.decrementAndGet();
+                    if (remaining <= 0 && rs.spawnedThisWave >= rs.mobsPerWave && rs.currentWave < rs.totalWaves) {
+                        // 本波怪物全部死亡 → 调度到袭击中心区域推进波次
+                        Bukkit.getRegionScheduler().run(plugin, rs.raidCenter, (task) -> {
+                            if (!rs.isActive) return;
+                            rs.currentWave++;
+                            rs.spawnedThisWave = 0;
+                            rs.lastSpawnTime = System.currentTimeMillis();
+                            // 触发下一波
+                            List<String> nextMobs = mobManager.getRaidMobs().get(rs.originalDoomLevel);
+                            if (nextMobs != null) {
+                                mobManager.spawnWaveMobs(rs.raidCenter, rs.originalDoomLevel,
+                                    cachedVillageRadius, nextMobs, rs);
+                            }
+                        });
+                    } else if (remaining <= 0 && rs.spawnedThisWave >= rs.mobsPerWave && rs.currentWave >= rs.totalWaves) {
+                        // 最后一波完成
+                        BossBar bar = bossBarManager.getBossBars().get(rs.playerId);
+                        Player raidPlayer = Bukkit.getPlayer(rs.playerId);
+                        if (bar != null && raidPlayer != null) {
+                            Bukkit.getRegionScheduler().run(plugin, rs.raidCenter, (task) -> {
+                                endRaid(raidPlayer, bar, rs);
+                            });
+                        }
+                    }
+                    break;
+                }
+            }
         }
     }
 
@@ -1399,6 +1431,20 @@ public class SpecialRaidListener implements Listener {
                         raidState.currentWave, raidState.totalWaves, bossBarManager.countAliveMobs()));
                 }
             });
+        }
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        UUID uid = event.getPlayer().getUniqueId();
+        BossBar bar = bossBarManager.getBossBars().remove(uid);
+        if (bar != null) {
+            bar.removeAll();
+            bar.setVisible(false);
+        }
+        RaidState rs = raidStates.get(uid);
+        if (rs != null && rs.isActive) {
+            rs.isActive = false;
         }
     }
 

@@ -153,6 +153,7 @@ public class RaidMobManager {
                     livingEntity.setGlowing(false);
                 }
             } catch (Exception ignored) {
+            if (plugin.getConfigManager().isDebugEnabled()) plugin.getLogger().fine("Ignored exception: " + ignored.getMessage());
             }
         }
         activeRaidMobs.clear();
@@ -343,6 +344,8 @@ public class RaidMobManager {
                         listener.recordMobSpawned();
                         enhanceRaidMob(mob, doomLevel);
                         activeRaidMobs.add(mob.getUniqueId());
+                        raidState.aliveMobs.incrementAndGet(); // 事件驱动计数器
+                        raidState.raidMobs.add(mob.getUniqueId()); // 关联到袭击
 
                         if (mob.getType() == EntityType.CREEPER) {
                             int offset = ThreadLocalRandom.current().nextInt(100);
@@ -443,6 +446,7 @@ public class RaidMobManager {
                 scaleAttr.setBaseValue(scaleMultiplier);
             }
         } catch (Exception ignored) {
+            if (plugin.getConfigManager().isDebugEnabled()) plugin.getLogger().fine("Ignored exception: " + ignored.getMessage());
         }
 
         String mobName = getMobName(mob.getType(), isElite);
@@ -1010,6 +1014,7 @@ public class RaidMobManager {
                 try {
                     bukkitMob.setAware(true);
                 } catch (Exception ignored) {
+            if (plugin.getConfigManager().isDebugEnabled()) plugin.getLogger().fine("Ignored exception: " + ignored.getMessage());
                 }
             }
 
@@ -1079,6 +1084,7 @@ public class RaidMobManager {
                 try {
                     bukkitMob.setAI(true);
                 } catch (Exception ignored) {
+            if (plugin.getConfigManager().isDebugEnabled()) plugin.getLogger().fine("Ignored exception: " + ignored.getMessage());
                 }
             }
         });
@@ -1133,6 +1139,7 @@ public class RaidMobManager {
                         return playerLoc.clone();
                     }
                 } catch (Exception ignored) {
+            if (plugin.getConfigManager().isDebugEnabled()) plugin.getLogger().fine("Ignored exception: " + ignored.getMessage());
                 }
             }
         }
@@ -1258,6 +1265,7 @@ public class RaidMobManager {
                 return scale >= 1.5;
             }
         } catch (Exception ignored) {
+            if (plugin.getConfigManager().isDebugEnabled()) plugin.getLogger().fine("Ignored exception: " + ignored.getMessage());
         }
         return false;
     }

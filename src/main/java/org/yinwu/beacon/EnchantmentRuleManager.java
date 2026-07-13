@@ -151,7 +151,7 @@ public class EnchantmentRuleManager {
             try {
                 // 支持命名空间格式（如 minecraft:efficiency）或简单格式（如 efficiency）
                 String keyName = name.contains(":") ? name.split(":")[1] : name;
-                Enchantment enchant = Enchantment.getByKey(org.bukkit.NamespacedKey.minecraft(keyName));
+                Enchantment enchant = Enchantment.getByKey(org.bukkit.NamespacedKey.fromString("minecraft:" + keyName));
                 
                 if (enchant != null) {
                     enchantSet.add(enchant);
@@ -187,7 +187,7 @@ public class EnchantmentRuleManager {
             for (String name : enchantNames) {
                 try {
                     String keyName = name.contains(":") ? name.split(":")[1] : name;
-                    Enchantment enchant = Enchantment.getByKey(org.bukkit.NamespacedKey.minecraft(keyName));
+                    Enchantment enchant = Enchantment.getByKey(org.bukkit.NamespacedKey.fromString("minecraft:" + keyName));
                     
                     if (enchant != null) {
                         group.add(enchant);

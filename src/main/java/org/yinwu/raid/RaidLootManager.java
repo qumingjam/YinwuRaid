@@ -193,7 +193,7 @@ public class RaidLootManager {
         // 附魔书（ENCHANTED_BOOK + enchant）
         if ("ENCHANTED_BOOK".equalsIgnoreCase(entry.getMaterial()) && entry.getEnchant() != null && !entry.getEnchant().isEmpty()) {
             Enchantment enchantment = Enchantment.getByKey(
-                org.bukkit.NamespacedKey.minecraft(entry.getEnchant().toLowerCase())
+                org.bukkit.NamespacedKey.fromString("minecraft:" + entry.getEnchant().toLowerCase())
             );
             if (enchantment != null) {
                 int level = entry.getEnchantLevel() > 0 ? entry.getEnchantLevel() : 1;

@@ -386,7 +386,7 @@ public class RewardEntry {
     /**
      * ✅ 从 Map 加载奖励条目（更安全的方法）
      */
-    @SuppressWarnings({"unchecked", "deprecation"})
+    @SuppressWarnings("unchecked")
     public static RewardEntry fromMap(Map<String, Object> map) {
         RewardEntry entry = new RewardEntry();
         
@@ -461,7 +461,7 @@ public class RewardEntry {
             if (parts.length >= 1) {
                 try {
                     Enchantment enchantment = Enchantment.getByKey(
-                        org.bukkit.NamespacedKey.minecraft(parts[0].toLowerCase())
+                        org.bukkit.NamespacedKey.fromString("minecraft:" + parts[0].toLowerCase())
                     );
                     
                     if (enchantment == null) {
@@ -492,7 +492,7 @@ public class RewardEntry {
     /**
      * 从 List 加载附魔（更安全的方法）
      */
-    @SuppressWarnings({"unchecked", "deprecation"})
+    @SuppressWarnings("unchecked")
     private static List<EnchantmentData> loadEnchantmentsFromList(List<?> enchantList) {
         List<EnchantmentData> enchantments = new ArrayList<>();
         
@@ -506,7 +506,7 @@ public class RewardEntry {
                         Object levelObj = entry.getValue();
                         
                         Enchantment enchantment = Enchantment.getByKey(
-                            org.bukkit.NamespacedKey.minecraft(enchantName.toLowerCase())
+                            org.bukkit.NamespacedKey.fromString("minecraft:" + enchantName.toLowerCase())
                         );
                         
                         if (enchantment == null) {
@@ -536,7 +536,7 @@ public class RewardEntry {
                 if (parts.length >= 1) {
                     try {
                         Enchantment enchantment = Enchantment.getByKey(
-                            org.bukkit.NamespacedKey.minecraft(parts[0].toLowerCase())
+                            org.bukkit.NamespacedKey.fromString("minecraft:" + parts[0].toLowerCase())
                         );
                         
                         if (enchantment == null) {
@@ -575,7 +575,7 @@ public class RewardEntry {
             
             try {
                 Enchantment enchantment = Enchantment.getByKey(
-                    org.bukkit.NamespacedKey.minecraft(enchantName.toLowerCase().trim())
+                    org.bukkit.NamespacedKey.fromString("minecraft:" + enchantName.toLowerCase().trim())
                 );
                 
                 if (enchantment == null) {
@@ -596,7 +596,7 @@ public class RewardEntry {
     /**
      * ✅ 从 Map 加载不可升级的附魔列表
      */
-    @SuppressWarnings({"unchecked", "deprecation"})
+    @SuppressWarnings("unchecked")
     private static List<org.bukkit.enchantments.Enchantment> loadExcludedEnchantmentsFromMap(Map<String, Object> map) {
         List<org.bukkit.enchantments.Enchantment> excluded = new ArrayList<>();
         
@@ -608,7 +608,7 @@ public class RewardEntry {
                     String enchantName = (String) obj;
                     try {
                         Enchantment enchantment = Enchantment.getByKey(
-                            org.bukkit.NamespacedKey.minecraft(enchantName.toLowerCase().trim())
+                            org.bukkit.NamespacedKey.fromString("minecraft:" + enchantName.toLowerCase().trim())
                         );
                         
                         if (enchantment == null) {
