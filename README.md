@@ -148,3 +148,16 @@ rewards/config.yml      # 奖励配置
 - 仓库：[github.com/qumingjam/YinwuRaid](https://github.com/qumingjam/YinwuRaid)
 - 作者：Qumingjam
 - 网站：server.yinwurealm.org
+
+---
+
+## 优化记录
+
+- 波次进度从轮询改为事件驱动：`RaidState.aliveMobs`（`AtomicInteger`）+ `onEntityDeath` 即时触发下一波
+- 新增 `PlayerQuitEvent` 处理器：玩家退出时清理 BossBar 和 `RaidState`
+- `RaidMobManager` 6 处空 `catch` 块添加 `fine` 级别日志
+- `ThreadSafetyUtils` 移除 `Class.forName` 运行时 Folia 探测，直接使用 `Bukkit.isOwnedByCurrentRegion()`
+- 修复 `createRaidBossBar` 中 RaidState 构造器参数不匹配（漏传 `playerId`）
+- `NamespacedKey.minecraft()` 全部替换为 `NamespacedKey.fromString()`（Paper 1.21+ 废弃 API）
+- `RewardEntry.java` 移除 3 处陈旧的 `"deprecation"` `@SuppressWarnings`
+- `onDisable()` 新增 `HandlerList.unregisterAll(this)`
