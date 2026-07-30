@@ -1,8 +1,12 @@
 # YinwuRaid — 灾厄袭击系统
 
-Version: 1.2.1
+Version: **1.2.1**
 
 基于高等级不祥之兆/灾厄效果触发的多波次灾厄袭击。
+
+## 前置插件
+
+- [YinwuPluginLib](https://github.com/qumingjam/YinwuPluginLib)（必需）
 
 ## 功能
 
@@ -16,6 +20,10 @@ Version: 1.2.1
 - **YinwuForge 联动** — 袭击战利品包含锻造材料
 - **YinwuEnchant 联动** — 村庄英雄奖励和信标强化支持自定义附魔
 - **灾厄强化限制** — 灾厄强化后的物品禁止锻造和附魔
+
+## 下载
+
+[YinwuRaid-1.2.1.jar](https://github.com/qumingjam/YinwuRaid/releases/download/v1.2.1/YinwuRaid-1.2.1.jar)
 
 ## 技术栈
 
