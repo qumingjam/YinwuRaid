@@ -1,20 +1,20 @@
-# YinwuRaid — Raid System
+# YinwuRaid — 灾厄袭击系统
 
-Multi-wave calamity raid system triggered by high-level Bad Omen effects.
+基于高等级不祥之兆触发的多波次灾厄袭击。
 
-## Features
+## 功能
 
-- **Inverted Beacon** — Multi-layer beacon structure to trigger calamity effects
-- **Disaster Seed** — Upgrade existing enchantment levels beyond vanilla caps, 10% drop from Illusioners
-- **Multi-wave Raids** — Each wave includes an Illusioner, supports elite mobs
-- **Villager Rewards** — Profession-based reward pools scaled by hero level
-- **Doom Effects** — Particle fog, BossBar, sound effects
-- **MythicMobs Integration** — Soft dependency via reflection
-- **YinwuForge Integration** — Raid loot includes forge materials
-- **YinwuEnchant Integration** — Rewards can include custom enchanted books
+- **倒置信标** — 搭建多层信标结构触发灾厄效果
+- **灾厄之种** — 升级装备已有附魔等级，突破原版上限。幻术师 10% 掉落灵魂绑定附魔书
+- **多波次袭击** — 每波含幻术师，支持精英怪
+- **村民奖励** — 职业绑定奖励池，村庄英雄等级越高奖励越好
+- **灾厄效果** — 粒子迷雾、BossBar、音效
+- **MythicMobs 集成** — 软依赖，支持自定义生物
+- **YinwuForge 联动** — 袭击战利品包含锻造材料
+- **YinwuEnchant 联动** — 奖励可含自定义附魔书
 
-## Tech Stack
+## 技术栈
 
-- Java 21, Paper API 1.21+, Folia compatible
-- Event-driven scheduling
-- 26 hot-reloadable config classes
+- Java 21, Paper API 1.21+, Folia 兼容
+- 事件驱动调度
+- 26 个可热重载配置类
