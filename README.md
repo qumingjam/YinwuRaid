@@ -1,32 +1,94 @@
-# YinwuRaid — 灾厄袭击系统
+# YinwuRaid — Yinwu灾厄袭击
+# YinwuRaid — Raid System
 
-Version: **1.2.1**
+**最新版本：v1.2.1** | [下载 Release](https://github.com/qumingjam/YinwuRaid/releases/tag/v1.2.1)
 
-基于高等级不祥之兆/灾厄效果触发的多波次灾厄袭击。
+Multi-wave calamity raid system triggered by high-level Bad Omen effects.
 
-## 前置插件
+基于高等级不祥之兆触发的多波次灾厄袭击系统，包含信标、种子强化、村民奖励等完整机制。
 
-- [YinwuPluginLib](https://github.com/qumingjam/YinwuPluginLib)（必需）
+> ⚡ 完全兼容 Folia 区域线程调度，全部事件驱动。
 
-## 功能
+---
 
-- **倒置信标** — 自定义多层信标结构检测，触发灾厄效果
-- **灾厄之种** — 升级装备已有附魔等级，突破原版上限。幻术师每波生成，10% 掉落灵魂绑定附魔书
-- **附魔规则管理** — 按装备类型限制可应用附魔，支持互斥组配置（时运↔精准采集等）
-- **多波次袭击** — 每波含幻术师，支持精英怪、Boss 机制
-- **村民奖励** — 职业绑定奖励池（15 种职业），村庄英雄等级越高奖励越好
-- **灾厄效果** — 粒子迷雾（白/绿两种）、BossBar、音效
-- **MythicMobs 集成** — 软依赖，通过反射调用自定义生物
-- **YinwuForge 联动** — 袭击战利品包含锻造材料
-- **YinwuEnchant 联动** — 村庄英雄奖励和信标强化支持自定义附魔
-- **灾厄强化限制** — 灾厄强化后的物品禁止锻造和附魔
+## Features | 功能概览
 
-## 下载
+| 模块 | 说明 |
+|------|------|
+| 🗿 **倒置信标** | 自定义多层信标结构检测，触发灾厄效果 |
+| 🌱 **灾厄之种** | 升级装备已有附魔等级，突破原版上限 |
+| 👹 **多波次袭击** | 每波含幻术师，支持精英怪、Boss 机制 |
+| 🎁 **村民奖励** | 职业绑定奖励池（15种），英雄等级越高越好 |
+| 🌫️ **灾厄效果** | 粒子迷雾（白/绿）、BossBar、音效 |
+| 🧟 **MythicMobs** | 软依赖，支持自定义生物生成 |
 
-[YinwuRaid-1.2.1.jar](https://github.com/qumingjam/YinwuRaid/releases/download/v1.2.1/YinwuRaid-1.2.1.jar)
+---
 
-## 技术栈
+## Quick Start | 快速开始
 
-Java 21, Paper API 1.21+, Folia 兼容
-事件驱动调度
-26 个可热重载配置类
+1. 将 `YinwuRaid-1.2.1.jar` 放入 `plugins/` 目录
+2. 重启服务器
+3. 搭建**倒置信标**结构 → 激活灾厄效果
+4. 获得不祥之兆 VI+ 效果 → 自动触发袭击
+
+---
+
+## Commands | 命令
+
+| 命令 | 说明 | 权限 |
+|------|------|------|
+| `/yinwuraid` | 查看帮助 | `yinwuraid.use` |
+| `/yinwuraid start` | 手动触发袭击 | `yinwuraid.admin` |
+| `/yinwuraid stop` | 停止当前袭击 | `yinwuraid.admin` |
+| `/yinwuraid reload` | 重载配置 | `yinwuraid.admin` |
+
+---
+
+## Architecture | 架构
+
+```
+YinwuRaid
+├── beacon/              # 信标系统
+├── raid/                # 袭击核心（调度/刷怪/BossBar/Buff）
+├── reward/              # 村民奖励
+├── effect/              # 灾厄效果
+├── gui/                 # GUI 界面
+├── config/              # 26 个配置类
+└── YinwuRaidPlugin      # 主类
+```
+
+---
+
+## Build | 构建
+
+```bash
+git clone https://github.com/qumingjam/YinwuRaid.git
+cd YinwuRaid
+mvn clean package
+```
+
+产出：`target/YinwuRaid-1.2.1.jar`
+
+---
+
+## Dependencies | 依赖
+
+- **[YinwuPluginLib](https://github.com/qumingjam/YinwuPluginLib)**（必需）
+- **[Paper API 1.21+](https://papermc.io/)**（provided）
+- **MythicMobs**（可选）
+
+---
+
+## Design Principles | 设计原则
+
+- **事件驱动** — 无轮询，全部通过事件监听触发
+- **Folia 安全** — 全部跨区域操作正确路由
+- **配置化** — 26 个配置类，全部可热重载
+
+---
+
+## Links | 链接
+
+- 仓库：[github.com/qumingjam/YinwuRaid](https://github.com/qumingjam/YinwuRaid)
+- 关联：[YinwuForge](https://github.com/qumingjam/YinwuForge) | [YinwuEnchant](https://github.com/qumingjam/YinwuEnchant)
+- 作者：Qumingjam
