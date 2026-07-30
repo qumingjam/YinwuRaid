@@ -1,0 +1,52 @@
+# ============================================
+# 村民职业奖励配置 - 石匠 (Mason)
+# ============================================
+# 石匠提供建筑材料和矿石奖励
+
+mason:
+  villager-hero-6:
+    enabled: true
+    rewards:
+      - material: EMERALD
+        amount: 6-10
+        chance: 1.0
+  
+  villager-hero-7:
+    enabled: true
+    rewards:
+      - material: CLAY_BALL
+        amount: 2-5
+        chance: 0.4
+      - material: EMERALD
+        amount: 1-2
+        chance: 0.6
+
+  villager-hero-8:
+    enabled: true
+    rewards:
+      - material: BRICK
+        amount: 2-5
+        chance: 0.4
+      - material: EMERALD
+        amount: 2-5
+        chance: 0.6
+
+  villager-hero-9:
+    enabled: true
+    rewards:
+      - material: QUARTZ
+        amount: 2-5
+        chance: 0.3
+      - material: EMERALD
+        amount: 5-10
+        chance: 0.7
+
+  villager-hero-10:
+    enabled: true
+    rewards:
+      - material: NETHERITE_UPGRADE_SMITHING_TEMPLATE
+        amount: 1
+        chance: 0.1
+      - material: EMERALD
+        amount: 15-30
+        chance: 0.9

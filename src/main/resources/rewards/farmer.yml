@@ -1,0 +1,57 @@
+# ============================================
+# 村民职业奖励配置 - 农民 (Farmer)
+# ============================================
+# 农民提供食物和金苹果等奖励
+
+farmer:
+  # ✅ 彩蛋级（灾厄 6 级）- 只有绿宝石
+  villager-hero-6:
+    enabled: true
+    rewards:
+      - material: EMERALD
+        amount: 6-10
+        chance: 1.0
+  
+  # 7级灾厄奖励
+  villager-hero-7:
+    enabled: true
+    rewards:
+      - material: BREAD
+        amount: 2-5
+        chance: 0.4
+      - material: EMERALD
+        amount: 1-2
+        chance: 0.6
+
+  # 8级灾厄奖励
+  villager-hero-8:
+    enabled: true
+    rewards:
+      - material: GOLDEN_CARROT
+        amount: 3-5
+        chance: 0.4
+      - material: EMERALD
+        amount: 2-5
+        chance: 0.6
+
+  # 9级灾厄奖励
+  villager-hero-9:
+    enabled: true
+    rewards:
+      - material: GOLDEN_APPLE
+        amount: 1-2
+        chance: 0.3
+      - material: EMERALD
+        amount: 5-10
+        chance: 0.7
+
+  # 10级灾厄奖励
+  villager-hero-10:
+    enabled: true
+    rewards:
+      - material: ENCHANTED_GOLDEN_APPLE
+        amount: 1
+        chance: 0.2
+      - material: EMERALD
+        amount: 15-30
+        chance: 0.8

@@ -1,0 +1,44 @@
+# ========================================
+# 灾厄袭击配置 - Level 10 (最难难度)
+# ========================================
+
+level-10:
+  # 普通怪物列表（会随机选择生成）
+  normal-mobs:
+    # 灾厄流浪者 x2
+    STRAY: 2
+    # 灾厄掠夺者 x2
+    PILLAGER: 2
+    # 灾厄卫道士 x2
+    VINDICATOR: 2
+    # 灾厄唤魔者 x2
+    EVOKER: 2
+    # 灾厄女巫 x2
+    WITCH: 2
+    # 灾厄溺尸 x1
+    DROWNED: 1
+    # 灾厄尸壳 x1
+    HUSK: 1
+    # 灾厄僵尸猪灵 x1
+    ZOMBIFIED_PIGLIN: 1
+    # 灾厄烈焰人 x1
+    BLAZE: 1
+    # 灾厄恼鬼 x2
+    VEX: 2
+    # ✅ MythicMobs 自定义生物示例（前缀 mythicmob:）
+    # mythicmob:ShadowAssassin: 2
+    # mythicmob:DragonMinion: 1
+
+  # 精英怪物列表（会随机选择生成）
+  elite-mobs:
+    # [精英] 灾厄劫掠兽 x2
+    RAVAGER: 2
+    # [精英] 灾厄唤魔者 x1
+    EVOKER: 1
+    # [精英] 灾厄恶魂 x1
+    GHAST: 1
+    # [精英] 灾厄僵尸疣猪兽 x1
+    ZOGLIN: 1
+    # ✅ MythicMobs 精英生物示例
+    # mythicmob:AncientGolem: 1
+    # mythicmob:DemonLord: 1

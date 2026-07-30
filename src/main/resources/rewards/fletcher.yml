@@ -1,0 +1,63 @@
+# ============================================
+# 村民职业奖励配置 - 制箭师 (Fletcher)
+# ============================================
+# 制箭师提供弓箭和弹药奖励
+
+fletcher:
+  villager-hero-6:
+    enabled: true
+    rewards:
+      - material: EMERALD
+        amount: 6-10
+        chance: 1.0
+  
+  villager-hero-7:
+    enabled: true
+    rewards:
+      - material: ARROW
+        amount: 2-5
+        chance: 0.5
+      - material: EMERALD
+        amount: 1-2
+        chance: 0.5
+
+  villager-hero-8:
+    enabled: true
+    rewards:
+      - material: SPECTRAL_ARROW
+        amount: 2-5
+        chance: 0.4
+      - material: EMERALD
+        amount: 2-5
+        chance: 0.6
+
+  villager-hero-9:
+    enabled: true
+    rewards:
+      - material: BOW
+        amount: 1
+        chance: 0.3
+        enchantments:
+          possible-enchantments:
+            - POWER:3-5
+            - PUNCH:1-2
+            - FLAME:1
+      - material: EMERALD
+        amount: 5-10
+        chance: 0.7
+
+  villager-hero-10:
+    enabled: true
+    rewards:
+      - material: BOW
+        amount: 1
+        chance: 0.2
+        enchantments:
+          possible-enchantments:
+            - POWER:5
+            - PUNCH:2
+            - FLAME:1
+            - INFINITY:1
+      - material: EMERALD
+        amount: 15-30
+        chance: 0.8

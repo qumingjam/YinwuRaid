@@ -1,0 +1,44 @@
+name: YinwuRaid
+version: '${project.version}'
+main: org.yinwu.YinwuRaidPlugin
+api-version: '1.21'
+description: 一个为 Folia 核心设计的倒置信标和特殊袭击插件
+author: Qumingjam
+website: server.yinwurealm.org
+softdepend: [YinwuForge, YinwuEnchant]
+
+# Folia 兼容 - 使用区域线程调度
+folia-supported: true
+
+commands:
+  yinwuraid:
+    description: 查看插件信息
+    usage: /§c/yinwuraid
+    aliases: [yr]
+  yinwuraid reload:
+    description: 重新加载配置文件
+    usage: /§c/yinwuraid reload
+    permission: yinwuraid.admin.reload
+  yinwuraid giveitem:
+    description: 给予特殊物品（测试用）
+    usage: /§c/yinwuraid giveitem <item> [amount]
+    permission: yinwuraid.admin.giveitem
+  yinwuraid debug:
+    description: 显示调试信息
+    usage: /§c/yinwuraid debug <info|config|stats|beacon>
+    permission: yinwuraid.admin.debug
+
+permissions:
+  yinwuraid.admin.*:
+    description: 管理员权限
+    default: op
+    children:
+      yinwuraid.admin.reload: true
+      yinwuraid.admin.giveitem: true
+      yinwuraid.admin.debug: true
+  yinwuraid.beacon.use:
+    description: 允许使用倒置信标
+    default: true
+  yinwuraid.raid.participate:
+    description: 参与特殊袭击
+    default: true

@@ -1,0 +1,258 @@
+# ========================================
+# YinwuRaid 袭击全局配置
+# ========================================
+# 此文件包含袭击相关的全局设置
+# 各个难度的具体怪物配置请查看 raid/level-*.yml
+
+# ✅ 倒置信标设置
+beacon:
+  # 是否启用倒置信标
+  enabled: true
+  # 信标最大作用范围（方块）
+  max-range: 50
+  # 灾厄 buff 持续时间（秒）
+  doom-effect-duration: 300
+  
+  # ✅ 信标判定配置（可自定义信标结构要求）
+  detection:
+    # 信标正下方的容器类型（支持多种容器，可以添加或删除）
+    # 支持的容器类型：BARREL, CHEST, TRAPPED_CHEST, SHULKER_BOX 等
+    container-types:
+      # 木桶
+      - BARREL
+      # 箱子
+      - CHEST
+      # 陷阱箱
+      - TRAPPED_CHEST
+    # 是否需要容器底座（false = 不需要容器也能激活，只需信标+层级结构）
+    require-container: true
+  
+  # ✅ 信标层级结构配置（从下到上，1=最底层靠近信标，4=最顶层）
+  # 等级判定规则：
+  #   等级 1 = 完成第 1 层（铁块 3x3） → 灾厄 7 级
+  #   等级 2 = 完成第 1+2 层（+金块 5x5） → 灾厄 8 级
+  #   等级 3 = 完成第 1+2+3 层（+钻石块 7x7） → 灾厄 9 级
+  #   等级 4 = 完成所有层（+下界合金块 9x9） → 灾厄 10 级
+  layers:
+    1:
+      # 第 1 层材料（最底层，靠近信标）
+      material: IRON_BLOCK
+      # 3x3
+      size: 3
+      # Y+1（相对于信标方块）
+      offset: 1
+    2:
+      # 第 2 层材料
+      material: GOLD_BLOCK
+      # 5x5
+      size: 5
+      # Y+2
+      offset: 2
+    3:
+      # 第 3 层材料
+      material: DIAMOND_BLOCK
+      # 7x7
+      size: 7
+      # Y+3
+      offset: 3
+    4:
+      # 第 4 层材料（最顶层）
+      material: NETHERITE_BLOCK
+      # 9x9
+      size: 9
+      # Y+4
+      offset: 4
+  
+  # 不同等级信标的灾厄效果等级 (1-4 级对应灾厄 7-10，6 级对应灾厄 6)
+  # 优势：高等级灾厄不会触发原版袭击（原版只检测 1-5 级）
+  doom-levels:
+    # 等级 1 信标 → 灾厄 7 级
+    1: 7
+    # 等级 2 信标 → 灾厄 8 级
+    2: 8
+    # 等级 3 信标 → 灾厄 9 级
+    3: 9
+    # 等级 4 信标 → 灾厄 10 级
+    4: 10
+    # ✅ 彩蛋级信标（4层全是绿宝石块）→ 灾厄 6 级（隐藏等级）
+    6: 6
+  
+  # ✅ 激活信标所需消耗材料配置
+  activation:
+    # 消耗材料类型（支持任何物品 ID）
+    material: NETHER_STAR
+    # 消耗数量
+    amount: 1
+    # 材料显示名称（用于 GUI 提示）
+    display-name: "下界之星"
+  
+  # ✅ 彩蛋级信标专属激活配置
+  easter-egg-activation:
+    # 彩蛋级消耗材料（不祥之瓶）
+    material: OMINOUS_BOTTLE
+    # 消耗数量
+    amount: 64
+    # 显示名称
+    display-name: "不祥之瓶"
+
+# ============================================
+# 实体属性配置
+# ============================================
+entities:
+  # 怪物血量倍数
+  health-multiplier: 2.0
+  
+  # 怪物伤害倍数
+  damage-multiplier: 1.5
+  
+  # 怪物速度倍数
+  speed-multiplier: 1.2
+  
+  # 怪物追踪范围
+  follow-range: 48
+  
+  # ✅ 村民赠礼配置
+  villager-gift:
+    # 赠礼检测范围（方块）
+    range: 5.0
+    # 最小冷却时间（秒）
+    min-cooldown: 30
+    # 最大冷却时间（秒）
+    max-cooldown: 180
+    # 检测间隔（tick）
+    detection-interval: 100
+
+# ============================================
+# 战利品配置
+# ============================================
+raid-loot:
+  # 基础奖励
+  base-rewards:
+    # 绿宝石基础数量
+    emerald-base: 10
+    # 经验瓶倍数
+    exp-bottle-multiplier: 2
+  
+  # 额外物品
+  extra-items:
+    # 附魔金苹果
+    enchanted-golden-apple:
+      # 掉落概率（0.0-1.0）
+      chance: 0.3
+  
+  # ✅ 各难度专属战利品配置（替代原有硬编码 switch）
+  # 支持的材料类型：
+  #   - 普通物品：直接填入 Material 名称
+  #   - 附魔书（ENCHANTED_BOOK）：需指定 enchant 和 enchant-level
+  #   - 灾厄之种（WRITTEN_BOOK）：需指定 seed-type（1 或 2）
+  per-level:
+    6:
+      - { material: EMERALD_BLOCK, amount: 64 }
+    7:
+      - { material: DIAMOND, amount: 3 }
+      - { material: IRON_INGOT, amount: 16 }
+    8:
+      - { material: DIAMOND, amount: 5 }
+      - { material: GOLD_INGOT, amount: 16 }
+      - { material: ENCHANTED_BOOK, amount: 1, enchant: sharpness, enchant-level: 3 }
+    9:
+      - { material: DIAMOND, amount: 8 }
+      - { material: NETHERITE_SCRAP, amount: 2 }
+      - { material: ENCHANTED_BOOK, amount: 1, enchant: sharpness, enchant-level: 4 }
+      - { material: ENCHANTED_BOOK, amount: 1, enchant: protection, enchant-level: 3 }
+      - { material: WRITTEN_BOOK, amount: 2, seed-type: 1 }
+    10:
+      - { material: DIAMOND, amount: 12 }
+      - { material: NETHERITE_SCRAP, amount: 4 }
+      - { material: TOTEM_OF_UNDYING, amount: 1 }
+      - { material: ENCHANTED_BOOK, amount: 1, enchant: sharpness, enchant-level: 5 }
+      - { material: ENCHANTED_BOOK, amount: 1, enchant: protection, enchant-level: 4 }
+      - { material: ENCHANTED_BOOK, amount: 1, enchant: unbreaking, enchant-level: 3 }
+      - { material: WRITTEN_BOOK, amount: 2, seed-type: 2 }
+
+# ============================================
+# 波次配置
+# ============================================
+wave-settings:
+  # 波次偏移量
+  wave-offset: 5
+  
+  # ✅ 彩蛋级波次数
+  easter-egg-waves: 1
+  
+  # 波次间隔（tick）
+  wave-delay: 200
+  
+  # 怪物生成间隔（tick）
+  mob-interval: 40
+
+# ============================================
+# 精英配置
+# ============================================
+elite-settings:
+  # 各等级精英出现概率（0.0-1.0）
+  chances:
+    7: 0.1
+    8: 0.15
+    9: 0.2
+    10: 0.25
+  
+  # 精英血量倍数
+  health-multiplier: 2.0
+  
+  # 精英伤害倍数
+  damage-multiplier: 1.5
+  
+  # 精英体型倍数
+  scale-multiplier: 1.5
+
+# ============================================
+# 灾厄等级配置
+# ============================================
+doom-level-settings:
+  # 每级灾厄的加成系数
+  bonus-per-level: 0.2
+
+# ============================================
+# 战斗Buff配置
+# ============================================
+combat-buff:
+  # 是否启用战斗Buff
+  enabled: true
+  # Buff生效范围（方块）- 以灾厄信标为中心
+  range: 32
+  # Buff持续时间（秒）
+  duration: 10
+  # Buff施加间隔（tick）- 默认200tick=10秒
+  interval: 200
+
+# ============================================
+# 袭击范围配置
+# ============================================
+raid-area:
+  # 村庄半径（决定袭击影响范围和怪物生成范围）
+  # 默认值：48 方块
+  village-radius: 48
+  
+  # 英雄效果持续时间（秒）
+  hero-effect-duration: 600
+
+# ============================================
+# 袭击范围配置
+# ============================================
+
+# ============================================
+# 可用难度列表
+# ============================================
+# level-6:  彩蛋级（地狱难度！只生成史莱姆和苦力怕）
+# level-7:  简单难度
+# level-8:  普通难度
+# level-9:  困难难度
+# level-10: 最难难度
+# 
+# 每个难度的详细怪物配置请查看对应的文件：
+# - raid/level-6.yml
+# - raid/level-7.yml
+# - raid/level-8.yml
+# - raid/level-9.yml
+# - raid/level-10.yml

@@ -1,0 +1,59 @@
+# ============================================
+# 村民职业奖励配置 - 皮匠 (Leatherworker)
+# ============================================
+# 皮匠提供皮革制品和鞍等奖励
+
+leatherworker:
+  villager-hero-6:
+    enabled: true
+    rewards:
+      - material: EMERALD
+        amount: 6-10
+        chance: 1.0
+  
+  villager-hero-7:
+    enabled: true
+    rewards:
+      - material: LEATHER
+        amount: 2-5
+        chance: 0.5
+      - material: EMERALD
+        amount: 1-2
+        chance: 0.5
+
+  villager-hero-8:
+    enabled: true
+    rewards:
+      - material: LEATHER_HELMET
+        amount: 1
+        chance: 0.3
+        display-name: "§a皮革头盔"
+      - material: EMERALD
+        amount: 2-5
+        chance: 0.7
+
+  villager-hero-9:
+    enabled: true
+    rewards:
+      - material: SADDLE
+        amount: 1
+        chance: 0.2
+        display-name: "§b鞍"
+      - material: EMERALD
+        amount: 5-10
+        chance: 0.8
+
+  villager-hero-10:
+    enabled: true
+    rewards:
+      - material: LEATHER_CHESTPLATE
+        amount: 1
+        chance: 0.15
+        display-name: "§b§l染色素皮胸甲"
+        enchantments:
+          possible-enchantments:
+            - PROTECTION:3-4
+            - UNBREAKING:1-3
+      - material: EMERALD
+        amount: 15-30
+        chance: 0.85

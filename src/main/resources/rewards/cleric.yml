@@ -1,0 +1,57 @@
+# ============================================
+# 村民职业奖励配置 - 牧师 (Cleric)
+# ============================================
+# 牧师提供红石、青金石等魔法材料奖励
+
+cleric:
+  # ✅ 彩蛋级（灾厄 6 级）- 只有绿宝石
+  villager-hero-6:
+    enabled: true
+    rewards:
+      - material: EMERALD
+        amount: 6-10
+        chance: 1.0
+  
+  # 7级灾厄奖励
+  villager-hero-7:
+    enabled: true
+    rewards:
+      - material: REDSTONE
+        amount: 2-5
+        chance: 0.4
+      - material: EMERALD
+        amount: 1-2
+        chance: 0.6
+
+  # 8级灾厄奖励
+  villager-hero-8:
+    enabled: true
+    rewards:
+      - material: LAPIS_LAZULI
+        amount: 2-5
+        chance: 0.4
+      - material: EMERALD
+        amount: 2-5
+        chance: 0.6
+
+  # 9级灾厄奖励
+  villager-hero-9:
+    enabled: true
+    rewards:
+      - material: GHAST_TEAR
+        amount: 1-2
+        chance: 0.3
+      - material: EMERALD
+        amount: 5-10
+        chance: 0.7
+
+  # 10级灾厄奖励
+  villager-hero-10:
+    enabled: true
+    rewards:
+      - material: BLAZE_ROD
+        amount: 3-5
+        chance: 0.3
+      - material: EMERALD
+        amount: 15-30
+        chance: 0.7
