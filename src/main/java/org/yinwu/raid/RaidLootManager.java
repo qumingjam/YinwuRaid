@@ -89,10 +89,11 @@ public class RaidLootManager {
         if (configManager.isDebugEnabled()) {
             plugin.getLogger().info("§e[DEBUG] [RaidLootManager] giveRaidLoot: 玩家=" + player.getName() + ", 灾厄等级=" + doomLevel);
         }
-        Bukkit.getGlobalRegionScheduler().runDelayed(plugin, (task) -> {
+        // 派发到玩家线程，安全读取玩家所属世界（Rule 6）
+        player.getScheduler().run(plugin, (task) -> {
             if (!player.isOnline()) return;
 
-            Location beaconLocation = listener.getBeaconLocation(player.getWorld().getName());
+            Location beaconLocation = listener.getBeaconLocation(player.getUniqueId());
 
             if (beaconLocation == null) {
                 listener.sendRaidActionBar(player, "§e\u26A0 未找到信标容器，使用备用方案...");
@@ -102,18 +103,18 @@ public class RaidLootManager {
 
             org.yinwu.config.BeaconConfig beaconConfig = configManager.getBeaconConfig();
             int range = beaconConfig != null ? beaconConfig.getMaxRange() : 50;
-            int playerCount = 1;
 
-            for (Entity e : beaconLocation.getWorld().getNearbyEntities(beaconLocation, range, range, range, e2 -> e2 instanceof Player && !e2.equals(player))) {
-                playerCount++;
-            }
-
-            final int finalPlayerCount = playerCount;
-
-            Bukkit.getRegionScheduler().run(plugin, beaconLocation, (regionTask) -> {
-                fillContainer(beaconLocation, doomLevel, player, finalPlayerCount);
+            // Rule 6：玩家计数与容器填充都在信标区域线程执行
+            final Location beaconLoc = beaconLocation;
+            Bukkit.getRegionScheduler().run(plugin, beaconLoc, (regionTask) -> {
+                if (!player.isOnline()) return;
+                int playerCount = 1;
+                for (Entity e : beaconLoc.getWorld().getNearbyEntities(beaconLoc, range, range, range, e2 -> e2 instanceof Player && !e2.equals(player))) {
+                    playerCount++;
+                }
+                fillContainer(beaconLoc, doomLevel, player, playerCount);
             });
-        }, 20L);
+        }, null);
     }
 
     /**
@@ -187,10 +188,14 @@ public class RaidLootManager {
     private void giveLootViaVirtualChest(Player player, int doomLevel) {
         Inventory lootChest = Bukkit.createInventory(null, 27, "§4§l灾厄袭击战利品");
         fillLootChest(lootChest, doomLevel);
-        player.openInventory(lootChest);
-        listener.sendRaidActionBar(player, "§a\u2713 你获得了灾厄袭击战利品箱（虚拟）！");
-        plugin.getLogger().info(String.format("§a\u2713 已给予玩家 %s 灾厄等级 %d 的战利品（虚拟箱子）",
-            player.getName(), doomLevel));
+        // Rule 6: openInventory must be dispatched to the player thread
+        player.getScheduler().run(plugin, (task) -> {
+            if (!player.isOnline()) return;
+            player.openInventory(lootChest);
+            listener.sendRaidActionBar(player, "§a✓ 你获得了灾厄袭击战利品箱（虚拟）！");
+            plugin.getLogger().info(String.format("§a✓ 已给予玩家 %s 灾厄等级 %d 的战利品（虚拟箱子）",
+                player.getName(), doomLevel));
+        }, null);
     }
 
     /**

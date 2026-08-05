@@ -62,13 +62,17 @@ public class GiftThrowManager {
     private void startDetectionTask() {
         this.detectionTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, (task) -> {
             try {
-                // 使用缓存玩家遍历（ConcurrentHashMap.newKeySet 线程安全）
-                for (Player player : getCachedPlayers()) {
+                // 遍历所有在线玩家（修复：原实现遍历 affectedPlayers 缓存，初始为空→add 逻辑永远不执行→赠礼永不触发）
+                for (Player player : Bukkit.getOnlinePlayers()) {
                     if (!player.isOnline()) continue;
                     Bukkit.getRegionScheduler().run(plugin, player.getLocation(), (regionTask) -> {
                         int level = getHeroLevel(player);
-                        if (level >= 6) affectedPlayers.add(player.getUniqueId());
-                        if (level >= 6) checkAndGiveGifts(player);
+                        if (level >= 6) {
+                            affectedPlayers.add(player.getUniqueId());
+                            checkAndGiveGifts(player);
+                        } else {
+                            affectedPlayers.remove(player.getUniqueId());
+                        }
                     });
                 }
                 cleanupExpiredCooldowns();

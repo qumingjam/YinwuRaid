@@ -94,8 +94,10 @@ public class RaidBossBarManager {
         double progress = (double) raidState.currentWave / raidState.totalWaves;
         bossBar.setProgress(progress);
 
-        int currentWaveMobs = raidState.mobsPerWave;
-        int aliveCount = getAliveMobCount();
+        // 剩余分母 = 本波实际生成数（含每波 1 只幻术师）；未生成前回退到 mobsPerWave
+        int currentWaveMobs = raidState.waveMobCount > 0 ? raidState.waveMobCount : raidState.mobsPerWave;
+        // 使用本袭击的存活计数（避免并发袭击时显示全局总数），负数封底为 0
+        int aliveCount = Math.max(0, raidState.aliveMobs.get());
 
         bossBar.setTitle(String.format("§4§l灾厄袭击 §r§7- %s §r§c波次：%d/%d §r§7| §e剩余：%d/%d",
             getDifficultyName(doomLevel),

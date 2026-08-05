@@ -8,6 +8,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.PrepareAnvilEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
@@ -43,6 +45,10 @@ public class BeaconInteractionListener implements Listener {
     private static final int EASTER_EGG_LEVEL = 6;
     // 激活材料槽位（由 BeaconGUI 创建，listener 通过 PlayerOpenInventory 读取）
     private static final int STAR_SLOT = 44;
+
+    // GUI 标题（点击路由识别用）
+    private static final String BEACON_GUI_TITLE = "§4§l灾厄信标";
+    private static final String ENHANCE_GUI_TITLE = "§6§l灾厄强化";
 
     // 每个玩家打开信标GUI时的信标等级 (UUID -> beaconLevel)
     private final Map<UUID, Integer> playerBeaconLevels = new ConcurrentHashMap<>();
@@ -92,7 +98,7 @@ public class BeaconInteractionListener implements Listener {
             plugin.getLogger().fine("信标交互：" + player.getName());
         }
 
-        plugin.getSpecialRaidListener().setBeaconLocation(beaconLocation);
+        plugin.getSpecialRaidListener().setBeaconLocation(player, beaconLocation);
 
         if (beaconConfig != null && !beaconConfig.isEnabled()) {
             sendActionBar(player, "§c[系统] §7灾厄信标功能已禁用");
@@ -124,40 +130,46 @@ public class BeaconInteractionListener implements Listener {
 
         playerBeaconLevels.put(player.getUniqueId(), beaconLevel);
 
-        // 委托 BeaconGUI 打开界面
-        beaconGUI.openBeaconGUI(player);
+        // Rule 6：openInventory / sendMessage 属玩家操作，派发到玩家线程（当前在信标区域线程）
+        final int level = beaconLevel;
+        player.getScheduler().run(plugin, (task) -> {
+            if (!player.isOnline()) return;
 
-        if (!BeaconLevel.fromInt(beaconLevel).isValid()) {
-            player.sendMessage("§7━━━━━━━━━━━━━━━━");
-            player.sendMessage("§c信标结构不完整，无法激活！");
-            player.sendMessage("");
-            player.sendMessage("§6【激活方法】");
-            player.sendMessage("§f1. §b在信标下方 §e放置木桶");
+            // 委托 BeaconGUI 打开界面（传入检测等级，按真实结构显示 ✓/✗）
+            beaconGUI.openBeaconGUI(player, level);
 
-            if (beaconConfig != null && beaconConfig.getLayers() != null) {
-                java.util.List<Integer> keys = new java.util.ArrayList<>(beaconConfig.getLayers().keySet());
-                keys.sort((a, b) -> a - b);
+            if (!BeaconLevel.fromInt(level).isValid()) {
+                player.sendMessage("§7━━━━━━━━━━━━━━━━");
+                player.sendMessage("§c信标结构不完整，无法激活！");
+                player.sendMessage("");
+                player.sendMessage("§6【激活方法】");
+                player.sendMessage("§f1. §b在信标下方 §e放置木桶");
 
-                int step = 2;
-                for (Integer level : keys) {
-                    org.yinwu.config.LayerConfig layerConfig = beaconConfig.getLayers().get(level);
-                    if (layerConfig != null) {
-                        String materialName = layerConfig.getMaterial();
-                        int size = layerConfig.getSize();
-                        String chineseName = getMaterialChineseName(materialName);
-                        player.sendMessage("§f" + step + ". §b在信标上方 §e放置 " + size + "×" + size + " " + chineseName + " §7（激活 " + level + " 级信标）");
-                        step++;
+                if (beaconConfig != null && beaconConfig.getLayers() != null) {
+                    java.util.List<Integer> keys = new java.util.ArrayList<>(beaconConfig.getLayers().keySet());
+                    keys.sort((a, b) -> a - b);
+
+                    int step = 2;
+                    for (Integer lv : keys) {
+                        org.yinwu.config.LayerConfig layerConfig = beaconConfig.getLayers().get(lv);
+                        if (layerConfig != null) {
+                            String materialName = layerConfig.getMaterial();
+                            int size = layerConfig.getSize();
+                            String chineseName = getMaterialChineseName(materialName);
+                            player.sendMessage("§f" + step + ". §b在信标上方 §e放置 " + size + "×" + size + " " + chineseName + " §7（激活 " + lv + " 级信标）");
+                            step++;
+                        }
                     }
+                } else {
+                    player.sendMessage("§f2. §b在信标上方 §e放置 3×3 铁块 §7（激活 1 级信标）");
                 }
-            } else {
-                player.sendMessage("§f2. §b在信标上方 §e放置 3×3 铁块 §7（激活 1 级信标）");
-            }
 
-            player.sendMessage("§f" + 3 + ". §e完成后右键信标即可激活");
-            player.sendMessage("");
-            player.sendMessage("§c未检测到完整的结构层");
-            player.sendMessage("§7━━━━━━━━━━━━━━━━");
-        }
+                player.sendMessage("§f" + 3 + ". §e完成后右键信标即可激活");
+                player.sendMessage("");
+                player.sendMessage("§c未检测到完整的结构层");
+                player.sendMessage("§7━━━━━━━━━━━━━━━━");
+            }
+        }, null);
     }
 
     // ==================== 结构检测 ====================
@@ -181,15 +193,38 @@ public class BeaconInteractionListener implements Listener {
             sendActionBar(player, "§c⚠ 灾厄袭击正在进行中！");
             return;
         }
-        Inventory gui = player.getOpenInventory().getTopInventory();
-        if (gui == null) return;
-        int beaconLevel = playerBeaconLevels.getOrDefault(player.getUniqueId(), 0);
-        ItemStack starItem = gui.getItem(STAR_SLOT);
-        if (isEasterEgg) {
-            handleEasterEggActivation(player, gui, starItem, beaconLevel);
-        } else {
-            handleNormalActivation(player, gui, starItem, beaconLevel);
+        // 在信标区域线程重新验证结构（GUI 打开后玩家可能拆掉方块）
+        Location beaconLoc = detector.getLastDetectedBeacon();
+        if (beaconLoc == null || beaconLoc.getWorld() == null) {
+            sendActionBar(player, "§c未检测到信标位置！");
+            return;
         }
+        final boolean easter = isEasterEgg;
+        Bukkit.getRegionScheduler().run(plugin, beaconLoc, (task) -> {
+            int currentLevel = detector.getBeaconLevel(beaconLoc);
+            if (currentLevel <= 0) {
+                sendActionBar(player, "§c信标结构不完整，无法激活！");
+                return;
+            }
+            // 回玩家线程执行激活（GUI/材料操作必须在玩家线程）
+            player.getScheduler().run(plugin, (pt) -> {
+                if (!player.isOnline()) return;
+                playerBeaconLevels.put(player.getUniqueId(), currentLevel);
+                Inventory gui = player.getOpenInventory().getTopInventory();
+                if (gui == null) return;
+                ItemStack starItem = gui.getItem(STAR_SLOT);
+                if (easter) {
+                    handleEasterEggActivation(player, gui, starItem, currentLevel);
+                } else {
+                    handleNormalActivation(player, gui, starItem, currentLevel);
+                }
+            }, null);
+        });
+    }
+
+    /** BeaconGUI 按钮打开的灾厄强化入口 */
+    public void openEnhancer(Player player) {
+        enhancer.openEnhancementGUI(player);
     }
 
     private void handleEasterEggActivation(Player player, Inventory gui, ItemStack starItem, int beaconLevel) {
@@ -423,25 +458,107 @@ public class BeaconInteractionListener implements Listener {
         }
     }
 
+    // ==================== 事件：GUI 点击路由（断链#2 接线） ====================
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGHEST)
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player player)) return;
+        Inventory top = event.getView().getTopInventory();
+        if (top == null) return;
+        String title = event.getView().getTitle();
+        int rawSlot = event.getRawSlot();
+        boolean topClicked = rawSlot >= 0 && rawSlot < top.getSize();
+
+        // 灾厄信标 GUI
+        if (BEACON_GUI_TITLE.equals(title)) {
+            if (topClicked) {
+                if (rawSlot == BeaconGUI.MATERIAL_SLOT) {
+                    // 材料槽：只允许放下界之星 / 不详之瓶（1-5级），其余拒绝
+                    ItemStack cursor = event.getCursor();
+                    if (cursor != null && !cursor.getType().isAir()
+                            && cursor.getType() != Material.NETHER_STAR
+                            && cursor.getType() != Material.OMINOUS_BOTTLE) {
+                        event.setCancelled(true);
+                        sendActionBar(player, "§c只能放入下界之星或不祥之瓶！");
+                        return;
+                    }
+                    return; // 放行（放入/取出）
+                }
+                event.setCancelled(true);
+                beaconGUI.handleClick(player, rawSlot, top);
+                return;
+            }
+            // 从背包 shift-click 放入：唯一空槽是材料槽 44，校验物品类型
+            if (event.isShiftClick()) {
+                ItemStack current = event.getCurrentItem();
+                if (current != null && !current.getType().isAir()
+                        && current.getType() != Material.NETHER_STAR
+                        && current.getType() != Material.OMINOUS_BOTTLE) {
+                    event.setCancelled(true);
+                    sendActionBar(player, "§c该信标 GUI 只能放入下界之星或不祥之瓶！");
+                }
+            }
+            return;
+        }
+
+        // 灾厄强化 GUI
+        if (ENHANCE_GUI_TITLE.equals(title)) {
+            if (topClicked) {
+                if (rawSlot == BeaconEnhancer.INPUT_TOOL_SLOT || rawSlot == BeaconEnhancer.INPUT_BOOK_SLOT) {
+                    // 输入槽：允许放入/取出，点击后延迟刷新预览
+                    enhancer.schedulePreviewUpdate(player);
+                    return;
+                }
+                event.setCancelled(true);
+                if (rawSlot == BeaconEnhancer.OUTPUT_SLOT) {
+                    enhancer.handleOutputSlotClick(player, top);
+                }
+            } else {
+                // 从背包 shift-click 放入输入槽时也刷新预览
+                enhancer.schedulePreviewUpdate(player);
+            }
+        }
+    }
+
+    @EventHandler(priority = org.bukkit.event.EventPriority.MONITOR)
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (!(event.getPlayer() instanceof Player player)) return;
+        String title = event.getView().getTitle();
+
+        if (BEACON_GUI_TITLE.equals(title)) {
+            // 返还未消耗的激活材料（槽 44），防止关闭 GUI 后材料丢失
+            ItemStack star = event.getView().getTopInventory().getItem(STAR_SLOT);
+            if (star != null && star.getType() != Material.AIR) {
+                var remaining = player.getInventory().addItem(star);
+                for (ItemStack drop : remaining.values()) {
+                    player.getWorld().dropItemNaturally(player.getLocation().add(0, 1, 0), drop);
+                }
+            }
+        } else if (ENHANCE_GUI_TITLE.equals(title)) {
+            enhancer.handleGuiClose(player, event.getInventory());
+        }
+    }
+
     // ==================== 辅助方法 ====================
 
     private void sendActionBar(Player player, String message) {
         if (!player.isOnline()) return;
 
-        Bukkit.getRegionScheduler().run(plugin, player.getLocation(), (task) -> {
+        // Rule 6：派发到玩家线程（避免跨线程读取 player.getLocation()）
+        player.getScheduler().run(plugin, (task) -> {
             if (!player.isOnline()) return;
             try {
                 player.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(message));
 
-                Bukkit.getRegionScheduler().runDelayed(plugin, player.getLocation(), (clearTask) -> {
+                player.getScheduler().runDelayed(plugin, (clearTask) -> {
                     if (player.isOnline()) {
                         player.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(""));
                     }
-                }, 60L);
+                }, null, 60L);
             } catch (Exception e) {
                 plugin.getLogger().fine("§e⚠ 发送 ActionBar 失败：" + e.getMessage());
             }
-        });
+        }, null);
     }
 
     private void broadcastActionBar(Location center, double radius, String message) {

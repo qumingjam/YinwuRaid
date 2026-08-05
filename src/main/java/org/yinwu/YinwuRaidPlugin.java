@@ -83,17 +83,11 @@ public class YinwuRaidPlugin extends YinwuPlugin {
     }
 
     private void tryEnchantLink() {
-        var enchant = Bukkit.getServicesManager().load(net.yinwu.lib.api.EnchantAPI.class);
-        if (enchant != null) {
+        // 各插件各自 shade YinwuPluginLib，ServicesManager 按 Class 匹配会失效；
+        // 改用反射桥通过 YinwuEnchant 的 ClassLoader 拿服务实例
+        org.yinwu.util.EnchantBridge.init();
+        if (org.yinwu.util.EnchantBridge.isAvailable()) {
             getLogger().info("§a✓ 检测到 YinwuEnchant —— 袭击奖励将包含自定义附魔书");
-            // 在奖励系统中启用附魔书掉落
-            if (rewardManager != null) {
-                rewardManager.setEnchantAPI(enchant);
-            }
-            // 在信标强化系统中支持自定义附魔
-            if (beaconListener != null) {
-                beaconListener.setEnchantAPI(enchant);
-            }
         }
     }
 
@@ -114,6 +108,10 @@ public class YinwuRaidPlugin extends YinwuPlugin {
         if (giftThrowManager != null) {
             giftThrowManager.cleanup();
         }
+
+        // Rule 8：反注册本插件所有监听器，避免重载时重复注册
+        HandlerList.unregisterAll(this);
+
         getLogger().info("§6[YinwuRaid] §c插件已安全禁用");
     }
 

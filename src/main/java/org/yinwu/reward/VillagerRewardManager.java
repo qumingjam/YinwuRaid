@@ -21,16 +21,10 @@ import java.util.concurrent.ThreadLocalRandom;
 public class VillagerRewardManager {
     private final YinwuRaidPlugin plugin;
     private final Map<String, Map<String, List<RewardEntry>>> professionRewards = new java.util.concurrent.ConcurrentHashMap<>();
-    private net.yinwu.lib.api.EnchantAPI enchantAPI;
 
-    /** 设置跨插件附魔 API（由 YinwuRaidPlugin 在检测到 Enchant 时调用） */
-    public void setEnchantAPI(net.yinwu.lib.api.EnchantAPI enchantAPI) {
-        this.enchantAPI = enchantAPI;
-    }
-
-    /** 是否有 Enchant 联动可用 */
+    /** 是否有 Enchant 联动可用（反射桥，绕过各插件 shade 导致的 ServicesManager 匹配失败） */
     public boolean hasEnchantIntegration() {
-        return enchantAPI != null;
+        return org.yinwu.util.EnchantBridge.isAvailable();
     }
 
     /**
@@ -38,13 +32,13 @@ public class VillagerRewardManager {
      * @return 附魔书 ItemStack，若无联动可用则返回 null
      */
     public ItemStack trySelectBonusEnchantBook() {
-        if (enchantAPI == null) return null;
-        var ids = enchantAPI.getEnchantmentIds();
+        if (!org.yinwu.util.EnchantBridge.isAvailable()) return null;
+        var ids = org.yinwu.util.EnchantBridge.getEnchantmentIds();
         if (ids.isEmpty()) return null;
         String id = ids.get(ThreadLocalRandom.current().nextInt(ids.size()));
-        int maxLevel = enchantAPI.getMaxLevel(id);
+        int maxLevel = org.yinwu.util.EnchantBridge.getMaxLevel(id);
         int level = 1 + ThreadLocalRandom.current().nextInt(Math.min(maxLevel, 3));
-        return enchantAPI.createEnchantedBook(id, level);
+        return org.yinwu.util.EnchantBridge.createEnchantedBook(id, level);
     }
 
     public VillagerRewardManager(YinwuRaidPlugin plugin) {
@@ -262,7 +256,16 @@ public class VillagerRewardManager {
             return null;
         }
 
-        return selectWeightedReward(rewards, heroLevel);
+        ItemStack reward = selectWeightedReward(rewards, heroLevel);
+
+        // 单附魔附魔书：EnchantAPI 可用时 50% 替换为 YinwuEnchant 自定义附魔书
+        // （自定义附魔书单附魔、书内无互斥；与原版附魔的互斥由铁砧合成机制控制）
+        if (reward != null && reward.getType() == org.bukkit.Material.ENCHANTED_BOOK
+                && org.yinwu.util.EnchantBridge.isAvailable() && ThreadLocalRandom.current().nextDouble() < 0.5) {
+            ItemStack custom = trySelectBonusEnchantBook();
+            if (custom != null) return custom;
+        }
+        return reward;
     }
 
     /**

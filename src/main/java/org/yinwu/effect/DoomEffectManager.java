@@ -66,7 +66,12 @@ public class DoomEffectManager {
             Player player = Bukkit.getPlayer(uuid);
             if (player != null && player.isOnline()) {
                 try {
-                    player.removePotionEffect(doomEffectType);
+                    // Rule 6：药水操作须在玩家线程（插件禁用时调度可能不执行，属尽力清理）
+                    player.getScheduler().run(plugin, (task) -> {
+                        if (player.isOnline()) {
+                            player.removePotionEffect(doomEffectType);
+                        }
+                    }, null);
                 } catch (Exception ignored) {}
             }
         }

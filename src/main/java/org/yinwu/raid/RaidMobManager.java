@@ -635,7 +635,7 @@ public class RaidMobManager {
     public void setCreeperDetectionDebug(boolean val) { this.creeperDetectionDebug = val; }
 
     public void clearSpawnLocationCache(Location loc) {}
-    public Location findValidSpawnLocation(Location center, int radius) { return spawner != null ? spawner.findValidSpawnLocation(center) : null; }
+    public Location findValidSpawnLocation(Location center, int radius) { return spawner != null ? spawner.findValidSpawnLocation(center, radius) : null; }
     public Location findValidGolemSpawnLocation(Location center, int radius) { return findValidSpawnLocation(center, radius); }
     public void spawnWaveMobs(Location center, int doomLevel, int radius, java.util.List<String> mobTypes, RaidState raidState) { if (spawner != null) spawner.spawnWaveMobs(center, doomLevel, radius, mobTypes, raidState); }
     public void triggerManualCreeperCheck(Location loc) {}

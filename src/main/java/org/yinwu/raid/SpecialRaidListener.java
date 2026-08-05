@@ -57,7 +57,8 @@ public class SpecialRaidListener implements Listener {
     private final RaidBuffManager raidBuffManager;
 
     // 存储每个世界的灾厄信标位置（世界名称 -> 信标方块位置）
-    private final Map<String, Location> beaconLocations = new ConcurrentHashMap<>();
+    /** 每个玩家最近摸的信标位置（player UUID -> 信标），并发袭击各自以自己信标为中心 */
+    private final Map<UUID, Location> beaconLocations = new ConcurrentHashMap<>();
 
     // 存储每个灾厄信标的袭击状态（信标位置 -> 袭击状态）
     private final Map<Location, RaidState> raidStatesByBeacon = new ConcurrentHashMap<>();
@@ -110,6 +111,9 @@ public class SpecialRaidListener implements Listener {
     // ✅ 预搜索任务管理（玩家 UUID -> ScheduledTask）
     private final Map<UUID, io.papermc.paper.threadedregions.scheduler.ScheduledTask> preSearchTasks = new ConcurrentHashMap<>();
 
+    // ✅ 袭击调度器任务管理（玩家 UUID -> ScheduledTask），退出时取消、重进时恢复
+    private final Map<UUID, io.papermc.paper.threadedregions.scheduler.ScheduledTask> raidSchedulerTasks = new ConcurrentHashMap<>();
+
     // ✅ 性能监控：统计信息
     private long pluginStartTime = System.currentTimeMillis();
     private int totalRaidsTriggered = 0;
@@ -158,7 +162,6 @@ public class SpecialRaidListener implements Listener {
         loadDebugConfig();
         loadPerformanceConfig();
         loadRaidMobsConfig();
-        loadBeaconLocations();
 
         // 注意：周期性任务现在在管理器构造函数中启动
         // 灾厄效果检测任务改为信标激活后启动
@@ -260,6 +263,17 @@ public class SpecialRaidListener implements Listener {
         // 2. 取消所有定时任务（委托给管理器）
         defenderManager.cleanup();
 
+        // 2.1 取消灾厄检测任务（去重任务，可复用）
+        raidScheduler.cleanup();
+
+        // 2.2 取消所有袭击调度器任务
+        for (io.papermc.paper.threadedregions.scheduler.ScheduledTask task : raidSchedulerTasks.values()) {
+            if (task != null && !task.isCancelled()) {
+                task.cancel();
+            }
+        }
+        raidSchedulerTasks.clear();
+
         // ✅ 取消快速村民死亡检测任务
         if (villagerDeathCheckTask != null && !villagerDeathCheckTask.isCancelled()) {
             villagerDeathCheckTask.cancel();
@@ -345,26 +359,19 @@ public class SpecialRaidListener implements Listener {
     public void recordBossBarCreated() { totalBossBarsCreated++; }
 
     public int getActiveRaidCount() {
-        return raidStatesByBeacon.values().stream()
-            .mapToInt(state -> state.isActive ? 1 : 0)
-            .sum();
+        return (int) raidStates.values().stream()
+            .filter(state -> state.isActive)
+            .count();
     }
 
     // ==================== 信标位置管理 ====================
 
-    private void loadBeaconLocations() {
-        if (plugin.getBeaconDetector() != null) {
-            Location beaconLoc = plugin.getBeaconDetector().getLastDetectedBeacon();
-            if (beaconLoc != null) {
-                beaconLocations.put(beaconLoc.getWorld().getName(), beaconLoc.clone());
-            }
-        }
-    }
-
-    public void setBeaconLocation(Location beaconLocation) {
-        if (beaconLocation != null && beaconLocation.getWorld() != null) {
-            Location oldLocation = beaconLocations.get(beaconLocation.getWorld().getName());
-            beaconLocations.put(beaconLocation.getWorld().getName(), beaconLocation.clone());
+    /** 记录玩家摸过的信标（per-player，避免并发袭击中心串扰） */
+    public void setBeaconLocation(Player player, Location beaconLocation) {
+        if (player != null && beaconLocation != null && beaconLocation.getWorld() != null) {
+            UUID pUid = player.getUniqueId();
+            Location oldLocation = beaconLocations.get(pUid);
+            beaconLocations.put(pUid, beaconLocation.clone());
 
             if (oldLocation != null) {
                 plugin.getLogger().info(String.format("§e[信标更新] 旧位置:(%d,%d,%d) → 新位置:(%d,%d,%d)",
@@ -582,14 +589,14 @@ public class SpecialRaidListener implements Listener {
         }
 
         Location beaconLoc = null;
-        String worldName = player.getWorld().getName();
+        UUID pUid = player.getUniqueId();
 
-        if (beaconLocations.containsKey(worldName)) {
-            beaconLoc = beaconLocations.get(worldName);
+        if (beaconLocations.containsKey(pUid)) {
+            beaconLoc = beaconLocations.get(pUid);
         } else if (plugin.getBeaconDetector() != null) {
             beaconLoc = plugin.getBeaconDetector().getLastDetectedBeacon();
             if (beaconLoc != null) {
-                beaconLocations.put(worldName, beaconLoc.clone());
+                beaconLocations.put(pUid, beaconLoc.clone());
             }
         }
 
@@ -686,14 +693,18 @@ public class SpecialRaidListener implements Listener {
 
             if (secondsLeft[0] <= 3 && secondsLeft[0] > 0) {
                 sendRaidActionBar(player, String.format("§4§l\u274C 袭击即将开始！§r§e 还剩 %d 秒", secondsLeft[0]));
-                center.getWorld().playSound(center, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
+                // Rule 6：世界音效必须路由到信标区域线程
+                Bukkit.getRegionScheduler().run(plugin, center, (s) ->
+                    center.getWorld().playSound(center, org.bukkit.Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f));
             }
 
             if (secondsLeft[0] <= 0) {
                 taskRef[0].cancel();
                 countdownBar.setVisible(false);
 
-                center.getWorld().playSound(center, org.bukkit.Sound.ITEM_GOAT_HORN_SOUND_1, 1.0f, 1.0f);
+                // Rule 6：世界音效必须路由到信标区域线程
+                Bukkit.getRegionScheduler().run(plugin, center, (s) ->
+                    center.getWorld().playSound(center, org.bukkit.Sound.ITEM_GOAT_HORN_SOUND_1, 1.0f, 1.0f));
                 clearRaidOmenFromArea(center, radius);
 
                 // 延迟 1 秒生成铁傀儡
@@ -752,18 +763,21 @@ public class SpecialRaidListener implements Listener {
     public void sendRaidActionBar(Player player, String message) {
         if (!player.isOnline()) return;
 
-        try {
-            player.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(message));
+        // Rule 6：ActionBar 属玩家操作，必须派发到玩家线程（调用方可能处于全局/其他区域线程）
+        player.getScheduler().run(plugin, (task) -> {
+            if (!player.isOnline()) return;
+            try {
+                player.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(message));
 
-            Location playerLocation = player.getLocation().clone();
-            Bukkit.getRegionScheduler().runDelayed(plugin, playerLocation, (task) -> {
-                if (player.isOnline()) {
-                    player.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(""));
-                }
-            }, 60L);
-        } catch (Exception e) {
-            plugin.getLogger().fine("§e\u26A0 发送 ActionBar 失败：" + e.getMessage());
-        }
+                player.getScheduler().runDelayed(plugin, (clearTask) -> {
+                    if (player.isOnline()) {
+                        player.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(""));
+                    }
+                }, null, 60L);
+            } catch (Exception e) {
+                plugin.getLogger().fine("§e⚠ 发送 ActionBar 失败：" + e.getMessage());
+            }
+        }, null);
     }
 
     public void broadcastRaidActionBar(Location center, double radius, String message) {
@@ -878,7 +892,8 @@ public class SpecialRaidListener implements Listener {
 
         final long[] tickCounter = {0};
 
-        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, (task) -> {
+        io.papermc.paper.threadedregions.scheduler.ScheduledTask raidTask =
+            Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, (task) -> {
             if (!player.isOnline()) {
                 plugin.getLogger().fine(String.format("§e\u26A0 玩家 %s 已退出，灾厄袭击暂停", player.getName()));
                 return;
@@ -909,14 +924,13 @@ public class SpecialRaidListener implements Listener {
                 });
             }
 
-            // 更新 BossBar
-            if (tickCounter[0] % bossBarUpdateInterval == 0) {
-                Bukkit.getGlobalRegionScheduler().run(plugin, (t) -> {
-                    if (!player.isOnline()) return;
-                    bossBarManager.updateBossBarForWave(bossBar, raidState, doomLevel);
-                });
-            }
+            // 更新 BossBar（本任务每 raidSchedulerInterval≈3s 执行一次，直接实时刷新）
+            // 修复：原先 tickCounter % bossBarUpdateInterval 中 tickCounter 每任务才 +1，需 120s 才刷新一次，导致 BossBar 卡死在初始值
+            bossBarManager.updateBossBarForWave(bossBar, raidState, doomLevel);
 
+
+            // 弥合已卸载/消失的怪（重进后村庄区块卸载会导致死亡事件不触发）
+            reconcileRaidMobs(raidState);
 
             // 检查是否可以开始下一波
             if (raidState.currentWave < raidState.totalWaves) {
@@ -924,7 +938,8 @@ public class SpecialRaidListener implements Listener {
                     return;
                 }
 
-                if (raidState.currentWave > 0 && !bossBarManager.areAllMobsDead()) {
+                // 仅当本袭击的存活怪物归零才推进（避免并发袭击互相干扰）
+                if (raidState.currentWave > 0 && raidState.aliveMobs.get() > 0) {
                     return;
                 }
 
@@ -978,7 +993,7 @@ public class SpecialRaidListener implements Listener {
 
                 return;
             } else {
-                if (bossBarManager.areAllMobsDead()) {
+                if (raidState.aliveMobs.get() <= 0) {
                     Bukkit.getRegionScheduler().run(plugin, center, (villagerCheckTask) -> {
                         int currentVillagerCount = countVillagersInVillage(center, radius);
 
@@ -995,7 +1010,9 @@ public class SpecialRaidListener implements Listener {
                 }
                 return;
             }
-        }, raidSchedulerInterval, raidSchedulerInterval);
+            }, raidSchedulerInterval, raidSchedulerInterval);
+
+        raidSchedulerTasks.put(player.getUniqueId(), raidTask);
 
         raidState.isActive = true;
 
@@ -1018,14 +1035,14 @@ public class SpecialRaidListener implements Listener {
         }
 
         villagerDeathCheckTask = Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, (task) -> {
-            for (Map.Entry<Location, RaidState> entry : raidStatesByBeacon.entrySet()) {
-                RaidState raidState = entry.getValue();
+            // 遍历实际填充的 raidStates（raidStatesByBeacon 从未填充，此前此检测恒失效）
+            for (RaidState raidState : raidStates.values()) {
                 if (!raidState.isActive) continue;
 
-                Location beaconLoc = entry.getKey();
+                Location beaconLoc = raidState.raidCenter;
                 if (beaconLoc == null || beaconLoc.getWorld() == null) continue;
 
-                // 在信标区域线程中扫描村民数量
+                // 在袭击中心区域线程中扫描村民数量
                 Bukkit.getRegionScheduler().run(plugin, beaconLoc, (regionTask) -> {
                     if (!raidState.isActive) return;
                     if (raidState.initialVillagerCount <= 0) return;
@@ -1039,20 +1056,15 @@ public class SpecialRaidListener implements Listener {
                     }
 
                     if (remaining <= 0) {
-                        // 找到对应玩家并结束袭击
-                        for (Map.Entry<UUID, RaidState> stateEntry : raidStates.entrySet()) {
-                            if (stateEntry.getValue() == raidState) {
-                                Player player = Bukkit.getPlayer(stateEntry.getKey());
-                                BossBar bossBar = bossBarManager.getBossBars().get(stateEntry.getKey());
+                        // 找到对应玩家并结束袭击（离线玩家跳过，重进时调度器会重新检测）
+                        Player player = Bukkit.getPlayer(raidState.playerId);
+                        BossBar bossBar = bossBarManager.getBossBars().get(raidState.playerId);
                                 if (player != null && bossBar != null) {
                                     plugin.getLogger().warning("§c\u2717 村庄内所有村民已死亡！立即结束袭击！");
                                     Bukkit.getGlobalRegionScheduler().run(plugin, (failTask) -> {
                                         endRaidWithFailure(player, bossBar, raidState);
                                     });
                                 }
-                                break;
-                            }
-                        }
                     }
                 });
             }
@@ -1085,6 +1097,13 @@ public class SpecialRaidListener implements Listener {
             plugin.getLogger().fine("§6【清理】已取消预搜索任务");
         }
 
+        // 取消袭击调度器任务
+        io.papermc.paper.threadedregions.scheduler.ScheduledTask raidTask =
+            raidSchedulerTasks.remove(player.getUniqueId());
+        if (raidTask != null && !raidTask.isCancelled()) {
+            raidTask.cancel();
+        }
+
         // 清理迷雾效果
         fogEffectManager.stopWhiteFogEffect(player.getUniqueId());
         fogEffectManager.stopGreenFogEffect(player.getUniqueId());
@@ -1094,17 +1113,27 @@ public class SpecialRaidListener implements Listener {
             bossBarManager.getBossBars().remove(player.getUniqueId());
             raidStates.remove(player.getUniqueId());
 
-            // 清理怪物相关缓存
-            mobManager.getActiveRaidMobs().clear();
-            mobManager.getMobSearchOffset().clear();
-            mobManager.getLastTargetSearchTime().clear();
-            mobManager.getCreeperCheckOffset().clear();
-            mobManager.getCachedFollowRanges().clear();
+            // 仅清理本袭击的怪物/缓存（避免清空其他并发袭击）
+            cleanupRaidMobs(raidState);
             mobManager.getVillagerCountCache().clear();
 
-            Location beaconLoc = beaconLocations.get(player.getWorld().getName());
+            Location beaconLoc = beaconLocations.get(player.getUniqueId());
             if (beaconLoc != null) {
                 mobManager.clearSpawnLocationCache(beaconLoc);
+            }
+
+            // ✅ 断链#1：通关奖励（村庄英雄 + 战利品），路由到信标/玩家区域
+            final int doomLevel = raidState.originalDoomLevel;
+            if (beaconLoc != null) {
+                final Location rewardCenter = beaconLoc;
+                Bukkit.getRegionScheduler().run(plugin, rewardCenter, (regionTask) -> {
+                    giveHeroOfTheVillageToAllNearbyPlayers(rewardCenter, player, doomLevel);
+                });
+            } else {
+                player.getScheduler().run(plugin, (playerTask) -> {
+                    if (!player.isOnline()) return;
+                    giveHeroOfTheVillageToAllNearbyPlayers(player.getLocation(), player, doomLevel);
+                }, null);
             }
         }, 60L);
     }
@@ -1130,18 +1159,29 @@ public class SpecialRaidListener implements Listener {
             plugin.getLogger().fine("§6【清理】已取消预搜索任务");
         }
 
+        // 取消袭击调度器任务
+        io.papermc.paper.threadedregions.scheduler.ScheduledTask raidTask =
+            raidSchedulerTasks.remove(player.getUniqueId());
+        if (raidTask != null && !raidTask.isCancelled()) {
+            raidTask.cancel();
+        }
+
         fogEffectManager.stopWhiteFogEffect(player.getUniqueId());
         fogEffectManager.stopGreenFogEffect(player.getUniqueId());
 
-        player.showTitle(net.kyori.adventure.title.Title.title(
-            Component.text("§c§l村民已全部死于灾厄"),
-            Component.text("§7"),
-            net.kyori.adventure.title.Title.Times.times(
-                java.time.Duration.ofMillis(titleFailFirstFadeIn * 50L),
-                java.time.Duration.ofMillis(titleFailFirstDisplay * 50L),
-                java.time.Duration.ofMillis(titleFailFirstFadeOut * 50L)
-            )
-        ));
+        // Rule 6：showTitle 必须派发到玩家线程
+        player.getScheduler().run(plugin, (t) -> {
+            if (!player.isOnline()) return;
+            player.showTitle(net.kyori.adventure.title.Title.title(
+                Component.text("§c§l村民已全部死于灾厄"),
+                Component.text("§7"),
+                net.kyori.adventure.title.Title.Times.times(
+                    java.time.Duration.ofMillis(titleFailFirstFadeIn * 50L),
+                    java.time.Duration.ofMillis(titleFailFirstDisplay * 50L),
+                    java.time.Duration.ofMillis(titleFailFirstFadeOut * 50L)
+                )
+            ));
+        }, null);
 
         Bukkit.getGlobalRegionScheduler().runDelayed(plugin, (t) -> {
             if (!player.isOnline()) return;
@@ -1150,29 +1190,29 @@ public class SpecialRaidListener implements Listener {
             bossBarManager.getBossBars().remove(player.getUniqueId());
             raidStates.remove(player.getUniqueId());
 
-            mobManager.getActiveRaidMobs().clear();
-            mobManager.getMobSearchOffset().clear();
-            mobManager.getLastTargetSearchTime().clear();
-            mobManager.getCreeperCheckOffset().clear();
-            mobManager.getCachedFollowRanges().clear();
+            // 仅清理本袭击的怪物/缓存（避免清空其他并发袭击）
+            cleanupRaidMobs(raidState);
             mobManager.getVillagerCountCache().clear();
 
-            Location beaconLoc = beaconLocations.get(player.getWorld().getName());
+            Location beaconLoc = beaconLocations.get(player.getUniqueId());
             if (beaconLoc != null) {
                 mobManager.clearSpawnLocationCache(beaconLoc);
             }
 
             plugin.getLogger().warning("§c✗ 灾厄袭击失败 - 村庄内所有村民已死亡！");
 
-            player.showTitle(net.kyori.adventure.title.Title.title(
-                Component.text("§c§l我们失败了"),
-                Component.text("§7村庄已被灾厄笼罩\n§e灾厄力量正在蔓延..."),
-                net.kyori.adventure.title.Title.Times.times(
-                    java.time.Duration.ofMillis(titleFailSecondFadeIn * 50L),
-                    java.time.Duration.ofMillis(titleFailSecondDisplay * 50L),
-                    java.time.Duration.ofMillis(titleFailSecondFadeOut * 50L)
-                )
-            ));
+            player.getScheduler().run(plugin, (t2) -> {
+                if (!player.isOnline()) return;
+                player.showTitle(net.kyori.adventure.title.Title.title(
+                    Component.text("§c§l我们失败了"),
+                    Component.text("§7村庄已被灾厄笼罩\n§e灾厄力量正在蔓延..."),
+                    net.kyori.adventure.title.Title.Times.times(
+                        java.time.Duration.ofMillis(titleFailSecondFadeIn * 50L),
+                        java.time.Duration.ofMillis(titleFailSecondDisplay * 50L),
+                        java.time.Duration.ofMillis(titleFailSecondFadeOut * 50L)
+                    )
+                ));
+            }, null);
 
             plugin.getLogger().info("§e\u2713 已保留灾厄袭击生物（它们将继续在村庄游荡）");
         }, titleFailDelay);
@@ -1206,6 +1246,91 @@ public class SpecialRaidListener implements Listener {
         });
 
         lootManager.giveRaidLoot(player, doomLevel);
+    }
+
+    /**
+     * 通关奖励：为信标范围内所有玩家施加村庄英雄效果，触发者额外获得战利品。
+     * 必须在 centerLocation 的区域线程调用。
+     */
+    private void giveHeroOfTheVillageToAllNearbyPlayers(Location centerLocation, Player triggerPlayer, int doomLevel) {
+        org.yinwu.config.BeaconConfig beaconConfig = configManager.getBeaconConfig();
+        int range = beaconConfig != null ? beaconConfig.getMaxRange() : 50;
+
+        List<Player> nearbyPlayers = new ArrayList<>();
+        for (Player onlinePlayer : centerLocation.getWorld().getPlayers()) {
+            if (onlinePlayer.getLocation().distance(centerLocation) <= range) {
+                nearbyPlayers.add(onlinePlayer);
+            }
+        }
+
+        int amplifier = doomLevel - 1;
+        org.yinwu.config.RaidConfig raidConfig = configManager.getRaidConfig();
+        int durationSeconds = raidConfig != null ? raidConfig.getHeroEffectDuration() : 600;
+        int duration = durationSeconds * 20;
+        String romanNumeral = bossBarManager.getRomanNumeral(amplifier + 1);
+
+        for (Player recipient : nearbyPlayers) {
+            if (!recipient.isOnline()) continue;
+
+            // 每个玩家在各自区域线程中施加村庄英雄效果
+            Bukkit.getRegionScheduler().run(plugin, recipient.getLocation(), (regionTask) -> {
+                if (!recipient.isOnline()) return;
+
+                recipient.removePotionEffect(org.bukkit.potion.PotionEffectType.BAD_OMEN);
+                recipient.removePotionEffect(org.bukkit.potion.PotionEffectType.RAID_OMEN);
+
+                org.bukkit.potion.PotionEffect heroEffect = new org.bukkit.potion.PotionEffect(
+                    org.bukkit.potion.PotionEffectType.HERO_OF_THE_VILLAGE, duration, amplifier, false, true, true
+                );
+                recipient.addPotionEffect(heroEffect);
+
+                recipient.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(
+                    "§b§l村庄英雄 " + romanNumeral + " §r§e - 你们成功保卫了村庄！§7（3 分钟）"));
+            });
+
+            // 触发者获得战利品（giveRaidLoot 内部自行调度区域线程）
+            if (recipient.equals(triggerPlayer)) {
+                lootManager.giveRaidLoot(recipient, doomLevel);
+            }
+        }
+
+        String message = String.format("§b§l【村庄英雄 %s】§r§e%s §r§7成功击退了 %d 级灾厄袭击，为附近的玩家带来了村庄英雄 %s 效果！",
+            romanNumeral, triggerPlayer.getName(), doomLevel, romanNumeral);
+        for (Player worldPlayer : centerLocation.getWorld().getPlayers()) {
+            if (!nearbyPlayers.contains(worldPlayer)) {
+                sendRaidActionBar(worldPlayer, message);
+            }
+        }
+    }
+
+    /**
+     * 仅清理本袭击登记的怪物 UUID（防止 endRaid/失败时清空其他并发袭击的追踪）
+     */
+    private void cleanupRaidMobs(RaidState raidState) {
+        for (UUID id : raidState.raidMobs) {
+            mobManager.getActiveRaidMobs().remove(id);
+            mobManager.getMobSearchOffset().remove(id);
+            mobManager.getLastTargetSearchTime().remove(id);
+            mobManager.getCreeperCheckOffset().remove(id);
+            mobManager.getCachedFollowRanges().remove(id);
+        }
+        raidState.raidMobs.clear();
+    }
+
+    /**
+     * 弥合被卸载/消失的怪：从存活计数剔除（村庄区块卸载后死亡事件不触发，防止卡波次）。
+     * 在全局调度器线程调用。
+     */
+    private void reconcileRaidMobs(RaidState raidState) {
+        if (raidState.raidMobs.isEmpty()) return;
+        for (UUID id : raidState.raidMobs) {
+            Entity e = Bukkit.getEntity(id);
+            if (e == null) {
+                if (raidState.raidMobs.remove(id)) {
+                    raidState.aliveMobs.decrementAndGet();
+                }
+            }
+        }
     }
 
 
@@ -1260,34 +1385,10 @@ public class SpecialRaidListener implements Listener {
                 healthTask.cancel();
             }
 
-            // 事件驱动：找到所属袭击，减少存活计数，如果归零则推进波次
+            // 只维护本袭击的存活计数（波次推进由 raidScheduler 统一负责，避免双推进/双奖励）
             for (RaidState rs : raidStates.values()) {
                 if (rs.isActive && rs.raidMobs.remove(entityId)) {
-                    int remaining = rs.aliveMobs.decrementAndGet();
-                    if (remaining <= 0 && rs.spawnedThisWave >= rs.mobsPerWave && rs.currentWave < rs.totalWaves) {
-                        // 本波怪物全部死亡 → 调度到袭击中心区域推进波次
-                        Bukkit.getRegionScheduler().run(plugin, rs.raidCenter, (task) -> {
-                            if (!rs.isActive) return;
-                            rs.currentWave++;
-                            rs.spawnedThisWave = 0;
-                            rs.lastSpawnTime = System.currentTimeMillis();
-                            // 触发下一波
-                            List<String> nextMobs = mobManager.getRaidMobs().get(rs.originalDoomLevel);
-                            if (nextMobs != null) {
-                                mobManager.spawnWaveMobs(rs.raidCenter, rs.originalDoomLevel,
-                                    cachedVillageRadius, nextMobs, rs);
-                            }
-                        });
-                    } else if (remaining <= 0 && rs.spawnedThisWave >= rs.mobsPerWave && rs.currentWave >= rs.totalWaves) {
-                        // 最后一波完成
-                        BossBar bar = bossBarManager.getBossBars().get(rs.playerId);
-                        Player raidPlayer = Bukkit.getPlayer(rs.playerId);
-                        if (bar != null && raidPlayer != null) {
-                            Bukkit.getRegionScheduler().run(plugin, rs.raidCenter, (task) -> {
-                                endRaid(raidPlayer, bar, rs);
-                            });
-                        }
-                    }
+                    rs.aliveMobs.decrementAndGet();
                     break;
                 }
             }
@@ -1307,20 +1408,26 @@ public class SpecialRaidListener implements Listener {
         }
 
         if (bossBar != null && raidState != null && raidState.isActive) {
+            // 断链#5：重进时重启袭击调度器（退出时已取消固定周期任务）
+            if (!raidSchedulerTasks.containsKey(playerUuid)) {
+                startRaidScheduler(player, raidState.raidCenter, raidState.originalDoomLevel,
+                    cachedVillageRadius, raidState, bossBar);
+            }
             plugin.getLogger().info(String.format("§a\u2713 玩家 %s 重新加入，恢复灾厄袭击", player.getName()));
 
             Bukkit.getGlobalRegionScheduler().run(plugin, (task) -> {
                 bossBar.addPlayer(player);
                 bossBar.setVisible(true);
                 plugin.getLogger().fine(String.format("§a\u2713 已恢复玩家 %s 的 BossBar 显示", player.getName()));
-                bossBarManager.updateBossBarForWave(bossBar, raidState, raidState.totalWaves + 5);
+                bossBarManager.updateBossBarForWave(bossBar, raidState, raidState.originalDoomLevel);
             });
 
             Bukkit.getRegionScheduler().run(plugin, player.getLocation(), (task) -> {
                 if (player.isOnline()) {
-                    sendRaidActionBar(player, "§6【灾厄袭击】§e你还有未完成的灾厄袭击！");
-                    sendRaidActionBar(player, String.format("§e 当前波次：%d/%d §7| §e剩余怪物：%d",
-                        raidState.currentWave, raidState.totalWaves, bossBarManager.getAliveMobCount()));
+                    // Chat 消息持久可见（ActionBar 会被后续袭击提示覆盖且 3s 后清空）
+                    player.sendMessage("§6【灾厄袭击】§e你还有未完成的灾厄袭击！");
+                    player.sendMessage(String.format("§e 当前波次：%d/%d §7| §e剩余怪物：%d",
+                        raidState.currentWave, raidState.totalWaves, raidState.aliveMobs.get()));
                 }
             });
         }
@@ -1329,15 +1436,28 @@ public class SpecialRaidListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
         UUID uid = event.getPlayer().getUniqueId();
-        BossBar bar = bossBarManager.getBossBars().remove(uid);
+        // 不 remove：onPlayerJoin 靠 bossBar != null 判断是否有未完成袭击，移除了则重进永远不恢复
+        BossBar bar = bossBarManager.getBossBars().get(uid);
         if (bar != null) {
             bar.removeAll();
             bar.setVisible(false);
         }
-        RaidState rs = raidStates.get(uid);
-        if (rs != null && rs.isActive) {
-            rs.isActive = false;
+
+        // 断链#5：取消该玩家袭击的任务（避免孤立全局任务泄漏），但保留 raidState 供重进恢复
+        io.papermc.paper.threadedregions.scheduler.ScheduledTask raidTask = raidSchedulerTasks.remove(uid);
+        if (raidTask != null && !raidTask.isCancelled()) {
+            raidTask.cancel();
         }
+        io.papermc.paper.threadedregions.scheduler.ScheduledTask preSearchTask = preSearchTasks.remove(uid);
+        if (preSearchTask != null) {
+            preSearchTask.cancel();
+        }
+        io.papermc.paper.threadedregions.scheduler.ScheduledTask golemTask = defenderManager.getGolemSpawnTasks().remove(uid);
+        if (golemTask != null) {
+            golemTask.cancel();
+        }
+        fogEffectManager.stopWhiteFogEffect(uid);
+        fogEffectManager.stopGreenFogEffect(uid);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -1403,12 +1523,12 @@ public class SpecialRaidListener implements Listener {
 
     // ==================== 访问器（供管理器调用） ====================
 
-    public Map<String, Location> getBeaconLocations() { return beaconLocations; }
+    public Map<UUID, Location> getBeaconLocations() { return beaconLocations; }
     public Map<UUID, RaidState> getRaidStates() { return raidStates; }
     public RaidLootManager getLootManager() { return lootManager; }
     public Map<Location, RaidState> getRaidStatesByBeacon() { return raidStatesByBeacon; }
 
-    public Location getBeaconLocation(String worldName) { return beaconLocations.get(worldName); }
+    public Location getBeaconLocation(UUID playerId) { return beaconLocations.get(playerId); }
     public double getCachedHealthMultiplier() { return cachedHealthMultiplier; }
     public double getCachedDamageMultiplier() { return cachedDamageMultiplier; }
     public double getCachedSpeedMultiplier() { return cachedSpeedMultiplier; }

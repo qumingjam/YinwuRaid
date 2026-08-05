@@ -124,47 +124,21 @@ public class RewardEntry {
      * 生成的附魔书在铁砧上可能无法使用（原版限制）
      */
     /**
-     * 图书管理员附魔（随机选择基础附魔，不强化，去重）
+     * 图书管理员附魔（单附魔原则）
+     * 赠礼附魔书只给 1 个附魔，避免书内出现互斥附魔（互斥由铁砧合成机制控制）。
      */
     private void applyLibrarianEnchantments(ItemMeta meta, int heroLevel) {
-        int baseCount = getBaseEnchantCount(heroLevel, "librarian");
-
         if (possibleEnchantments == null || possibleEnchantments.isEmpty()) {
             return;
         }
 
-        // ✅ 记录已选择的附魔类型（去重）
-        java.util.Set<Enchantment> selectedTypes = new java.util.HashSet<>();
+        // 随机选择 1 个附魔（单附魔书）
+        EnchantmentData enchantData = possibleEnchantments.get(ThreadLocalRandom.current().nextInt(possibleEnchantments.size()));
 
-        // ✅ 随机选择基础附魔（去重）
-        for (int i = 0; i < baseCount; i++) {
-            EnchantmentData enchantData;
-            int attempts = 0;
-
-            // 尝试选择不重复的附魔
-            do {
-                enchantData = possibleEnchantments.get(ThreadLocalRandom.current().nextInt(possibleEnchantments.size()));
-                attempts++;
-
-                // 如果已选择过该附魔类型，重新选择
-                if (selectedTypes.contains(enchantData.enchantment)) {
-                    continue;
-                }
-
-                // 找到未选择的附魔，退出循环
-                break;
-            } while (attempts < 50);  // 最多尝试 50 次
-
-            // 记录已选择的附魔类型
-            selectedTypes.add(enchantData.enchantment);
-
-            if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta) {
-                ((org.bukkit.inventory.meta.EnchantmentStorageMeta) meta)
-                    .addStoredEnchant(enchantData.enchantment, enchantData.level, true);
-            }
+        if (meta instanceof org.bukkit.inventory.meta.EnchantmentStorageMeta) {
+            ((org.bukkit.inventory.meta.EnchantmentStorageMeta) meta)
+                .addStoredEnchant(enchantData.enchantment, enchantData.level, true);
         }
-
-        // ✅ 不再进行强化（getBoostCount 返回 0）
     }
 
     /**
