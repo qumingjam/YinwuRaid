@@ -48,20 +48,18 @@ public class BeaconGUI {
     public void openBeaconGUI(Player player, int detectedLevel) {
         Inventory gui = plugin.getServer().createInventory(null, 54, "§4§l灾厄信标");
         BeaconConfig bc = configManager.getBeaconConfig();
-        if (bc != null) {
-            Map<Integer, LayerConfig> layers = bc.getLayers();
-            if (layers != null) {
-                for (Map.Entry<Integer, LayerConfig> e : layers.entrySet()) {
-                    int layer = e.getKey();
-                    int slot = getSlotForLevel(layer);
-                    // 只显示已完整构建的连续层（getBeaconLevel 从底层连续检测）；
-                    // 未构建的层及其上方层用玻璃板（fillFrame）代替，不显示图标
-                    if (slot >= 0 && layer <= detectedLevel) {
-                        setLayerItem(gui, slot, e.getValue(), layer);
-                    }
-                }
-            }
-        }
+        Map<Integer, LayerConfig> layers = bc != null ? bc.getLayers() : null;
+
+        // 第1行：红色装饰条
+        for (int i = 0; i < 9; i++) gui.setItem(i, pane(Material.RED_STAINED_GLASS_PANE));
+
+        // 彩蛋（满层绿宝石）时四层全绿宝石；否则按检测等级显示已构建层
+        boolean easter = detectedLevel >= 6;
+        setLayerRow(gui, 4, easter ? Material.EMERALD_BLOCK : layerMaterial(layers, 4, Material.NETHERITE_BLOCK), easter || detectedLevel >= 4);
+        setLayerRow(gui, 3, easter ? Material.EMERALD_BLOCK : layerMaterial(layers, 3, Material.DIAMOND_BLOCK), easter || detectedLevel >= 3);
+        setLayerRow(gui, 2, easter ? Material.EMERALD_BLOCK : layerMaterial(layers, 2, Material.GOLD_BLOCK), easter || detectedLevel >= 2);
+        setLayerRow(gui, 1, easter ? Material.EMERALD_BLOCK : layerMaterial(layers, 1, Material.IRON_BLOCK), easter || detectedLevel >= 1);
+
         setEnhanceButton(gui);
         setActivationButton(gui, bc);
         // 槽 44 材料槽留空供放入（fillFrame 跳过，保证可放入/可取出）
@@ -69,15 +67,14 @@ public class BeaconGUI {
         player.openInventory(gui);
     }
 
-    /** 合并后的激活按钮（槽 53，材料槽正下方），不介绍彩蛋 */
+    /** 激活按钮（槽 53，材料槽正下方） */
     private void setActivationButton(Inventory inv, BeaconConfig bc) {
         ItemStack btn = new ItemStack(Material.ENDER_PEARL);
         ItemMeta meta = btn.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName("§a§l激活灾厄信标");
+            meta.setDisplayName("§c§l激活灾厄信标");
             List<String> lore = new ArrayList<>();
-            lore.add("§7先在槽位 §e44 §7放入 §f下界之星");
-            lore.add("§7或不祥之瓶后点击本格激活");
+            lore.add("§7上方填入 §f下界之星 §7或 §d不详之瓶 §7×64");
             meta.setLore(lore);
             btn.setItemMeta(meta);
         }
@@ -94,11 +91,9 @@ public class BeaconGUI {
             return true;
         }
 
-        // 合并激活按钮：按下界之星 = 普通激活，放不详之瓶 = 彩蛋激活
+        // 激活按钮：彩蛋由结构等级决定，监听器按等级判断
         if (slot == ACTIVATE_SLOT) {
-            ItemStack mat = inv.getItem(MATERIAL_SLOT);
-            boolean easter = mat != null && mat.getType() == Material.OMINOUS_BOTTLE;
-            listener.tryActivateBeacon(player, easter);
+            listener.tryActivateBeacon(player, false);
             return true;
         }
         return false;
@@ -118,41 +113,65 @@ public class BeaconGUI {
         inv.setItem(ENHANCE_BUTTON_SLOT, btn);
     }
 
-    private void setLayerItem(Inventory inv, int slot, LayerConfig lc, int level) {
-        Material mat;
-        try { mat = Material.valueOf(lc.getMaterial()); } catch (IllegalArgumentException e) { mat = Material.IRON_BLOCK; }
-        ItemStack item = new ItemStack(mat, Math.min(level, 64));
-        ItemMeta meta = item.getItemMeta();
+    /** 金字塔层显示：level4→第2行9格、level3→第3行7格、level2→第4行5格、level1→第5行3格 */
+    private void setLayerRow(Inventory inv, int level, Material material, boolean built) {
+        if (!built) return;  // 未构建：留给 fillFrame 放玻璃占位
+        int start, count;
+        switch (level) {
+            case 4 -> { start = 9; count = 9; }
+            case 3 -> { start = 19; count = 7; }
+            case 2 -> { start = 29; count = 5; }
+            case 1 -> { start = 39; count = 3; }
+            default -> { return; }
+        }
+        ItemStack block = new ItemStack(material, count);
+        ItemMeta meta = block.getItemMeta();
         if (meta != null) {
             meta.setDisplayName("§6第 " + level + " 层");
             List<String> lore = new ArrayList<>();
-            lore.add("§7方块: " + lc.getMaterial());
-            lore.add("§7尺寸: " + lc.getSize() + "x" + lc.getSize());
-            lore.add("§7已放置: §a✓");
+            lore.add("§7方块: " + material.name());
+            lore.add("§7尺寸: " + count + "x" + count);
+            lore.add("§7状态: §a✓ 已构建");
             meta.setLore(lore);
-            item.setItemMeta(meta);
+            block.setItemMeta(meta);
         }
-        inv.setItem(slot, item);
+        for (int i = 0; i < count; i++) inv.setItem(start + i, block.clone());
+    }
+
+    private Material layerMaterial(Map<Integer, LayerConfig> layers, int level, Material defaultMat) {
+        if (layers != null) {
+            LayerConfig lc = layers.get(level);
+            if (lc != null) {
+                try { return Material.valueOf(lc.getMaterial()); } catch (Exception ignored) {}
+            }
+        }
+        return defaultMat;
     }
 
     private void fillFrame(Inventory inv) {
-        ItemStack frame = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta fm = frame.getItemMeta();
-        if (fm != null) { fm.setDisplayName(" "); frame.setItemMeta(fm); }
+        ItemStack red = pane(Material.RED_STAINED_GLASS_PANE);
+        ItemStack black = pane(Material.BLACK_STAINED_GLASS_PANE);
+        ItemStack yellow = pane(Material.YELLOW_STAINED_GLASS_PANE);
         for (int i = 0; i < inv.getSize(); i++) {
-            if (inv.getItem(i) == null) {
-                // 跳过交互槽：激活/强化按钮已设置，材料槽 44 留空供放入
-                if (i == ACTIVATE_SLOT || i == ENHANCE_BUTTON_SLOT || i == MATERIAL_SLOT) continue;
-                inv.setItem(i, frame);
+            if (inv.getItem(i) != null) continue;
+            // 跳过交互槽：激活/强化按钮已设置，材料槽 44 留空供放入
+            if (i == ACTIVATE_SLOT || i == ENHANCE_BUTTON_SLOT || i == MATERIAL_SLOT) continue;
+            // 底部行：暗红装饰条
+            if (i >= 45) {
+                inv.setItem(i, red);
+            } else if (i == 35 || i == 43) {
+                // 材料槽(44)周围：黄色突出
+                inv.setItem(i, yellow);
+            } else {
+                inv.setItem(i, black);
             }
         }
     }
 
-    /** 中央纵列（从下到上）：铁砧(强化) → 铁块 → 金块 → 钻石块 → 下界合金块 */
-    private int getSlotForLevel(int level) {
-        return switch (level) {
-            case 1 -> 40; case 2 -> 31; case 3 -> 22; case 4 -> 13;
-            default -> -1;
-        };
+    private ItemStack pane(Material material) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) { meta.setDisplayName(" "); item.setItemMeta(meta); }
+        return item;
     }
 }

@@ -12,30 +12,18 @@ folia-supported: true
 
 commands:
   yinwuraid:
-    description: 查看插件信息
-    usage: /§c/yinwuraid
+    description: 灾厄袭击主命令
+    usage: /yinwuraid help
     aliases: [yr]
-  yinwuraid reload:
-    description: 重新加载配置文件
-    usage: /§c/yinwuraid reload
-    permission: yinwuraid.admin.reload
-  yinwuraid giveitem:
-    description: 给予特殊物品（测试用）
-    usage: /§c/yinwuraid giveitem <item> [amount]
-    permission: yinwuraid.admin.giveitem
-  yinwuraid debug:
-    description: 显示调试信息
-    usage: /§c/yinwuraid debug <info|config|stats|beacon>
-    permission: yinwuraid.admin.debug
+    permission: yinwu.raid.use
 
 permissions:
-  yinwuraid.admin.*:
-    description: 管理员权限
+  yinwu.raid.use:
+    description: 使用灾厄袭击命令
+    default: true
+  yinwu.raid.admin:
+    description: 管理灾厄袭击
     default: op
-    children:
-      yinwuraid.admin.reload: true
-      yinwuraid.admin.giveitem: true
-      yinwuraid.admin.debug: true
   yinwuraid.beacon.use:
     description: 允许使用倒置信标
     default: true

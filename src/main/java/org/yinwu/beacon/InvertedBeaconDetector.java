@@ -337,10 +337,10 @@ public class InvertedBeaconDetector {
             plugin.getLogger().info("§e[DEBUG] [InvertedBeaconDetector] getBeaconLevel - 普通等级结果: " + level);
         }
 
-        // ✅ 仅在确认全部 4 层完整后才进行彩蛋检测，避免无效遍历
-        if (level >= layers.length && checkEasterEggBeacon(beaconLocation)) {
+        // 彩蛋检测：满层绿宝石（独立于普通层材料检查，避免绿宝石结构被普通层检查拦下）
+        if (checkEasterEggBeacon(beaconLocation)) {
             plugin.getLogger().info(String.format("§d✨ 发现彩蛋级信标！位置：%s", beaconLocation.toString()));
-            return 6; // ✅ 返回等级 6 表示彩蛋级
+            return 6; // 返回等级 6 表示彩蛋级
         }
 
         if (plugin.getConfigManager().isDebugEnabled()) {

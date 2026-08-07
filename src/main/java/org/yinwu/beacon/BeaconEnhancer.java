@@ -241,25 +241,38 @@ public class BeaconEnhancer {
     private Inventory createEnchantGUI() {
         Inventory gui = Bukkit.createInventory(new EnchantGUIHolder(), 54, ENCHANT_GUI_TITLE);
 
-        ItemStack filler = new ItemStack(Material.BLACK_STAINED_GLASS_PANE);
-        ItemMeta meta = filler.getItemMeta();
-        if (meta != null) {
-            meta.displayName(Component.text(" "));
-            filler.setItemMeta(meta);
-        }
-        for (int i = 0; i < 54; i++) {
-            gui.setItem(i, filler);
-        }
+        ItemStack purple = pane(Material.PURPLE_STAINED_GLASS_PANE);
+        ItemStack brightPurple = pane(Material.MAGENTA_STAINED_GLASS_PANE);
+        ItemStack yellow = pane(Material.YELLOW_STAINED_GLASS_PANE);
 
-        gui.setItem(DISPLAY_TOOL_SLOT, createDisplayItem(Material.NETHERITE_PICKAXE, "§b§l示例工具"));
+        // 紫色主题背景
+        for (int i = 0; i < 54; i++) {
+            gui.setItem(i, purple);
+        }
+        // 顶部/底部装饰条（亮紫）
+        for (int i = 0; i < 9; i++) gui.setItem(i, brightPurple);
+        for (int i = 45; i < 54; i++) gui.setItem(i, brightPurple);
+        // 输入/输出行两侧黄色点缀，突出工作台区域
+        gui.setItem(28, yellow);
+        gui.setItem(30, yellow);
+        gui.setItem(32, yellow);
+
+        gui.setItem(DISPLAY_TOOL_SLOT, createDisplayItem(Material.NETHERITE_PICKAXE, "§d§l示例工具"));
         gui.setItem(DISPLAY_BOOK_SLOT, createDisplayItem(Material.WRITTEN_BOOK, "§d§l灾厄之种"));
-        gui.setItem(DISPLAY_PREVIEW_SLOT, createDisplayItem(Material.ANVIL, "§a§l强化预览"));
+        gui.setItem(DISPLAY_PREVIEW_SLOT, createDisplayItem(Material.ANVIL, "§d§l强化预览"));
 
         gui.setItem(INPUT_TOOL_SLOT, null);
         gui.setItem(INPUT_BOOK_SLOT, null);
         gui.setItem(OUTPUT_SLOT, null);
 
         return gui;
+    }
+
+    private ItemStack pane(Material material) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) { meta.setDisplayName(" "); item.setItemMeta(meta); }
+        return item;
     }
 
     // ==================== 内部：显示管理 ====================
@@ -286,8 +299,8 @@ public class BeaconEnhancer {
                 playerDisplayIndexes.put(player.getUniqueId(), currentIndex);
                 Material currentItem = DISPLAY_ITEMS[currentIndex];
 
-                gui.setItem(DISPLAY_TOOL_SLOT, createDisplayItem(currentItem, "§b§l示例物品"));
-                gui.setItem(DISPLAY_PREVIEW_SLOT, createDisplayItem(Material.ANVIL, "§a§l附魔预览"));
+                gui.setItem(DISPLAY_TOOL_SLOT, createDisplayItem(currentItem, "§d§l示例物品"));
+                gui.setItem(DISPLAY_PREVIEW_SLOT, createDisplayItem(Material.ANVIL, "§d§l附魔预览"));
             });
         }, 1L, 20L);
 

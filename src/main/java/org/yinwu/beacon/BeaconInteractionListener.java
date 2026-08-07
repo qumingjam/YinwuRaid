@@ -205,13 +205,14 @@ public class BeaconInteractionListener implements Listener {
             sendActionBar(player, "§c未检测到信标位置！");
             return;
         }
-        final boolean easter = isEasterEgg;
         Bukkit.getRegionScheduler().run(plugin, beaconLoc, (task) -> {
             int currentLevel = detector.getBeaconLevel(beaconLoc);
             if (currentLevel <= 0) {
                 sendActionBar(player, "§c信标结构不完整，无法激活！");
                 return;
             }
+            // 彩蛋由结构等级决定（等级6=满层绿宝石）
+            final boolean easter = currentLevel == BeaconLevel.EASTER_EGG.getLevel();
             // 回玩家线程执行激活（GUI/材料操作必须在玩家线程）
             player.getScheduler().run(plugin, (pt) -> {
                 if (!player.isOnline()) return;
@@ -368,7 +369,10 @@ public class BeaconInteractionListener implements Listener {
         BeaconConfig doomBeaconConfig = configManager.getBeaconConfig();
 
         java.util.Map<Integer, Integer> doomLevels = doomBeaconConfig != null ? doomBeaconConfig.getDoomLevels() : new java.util.HashMap<>();
-        int doomLevel = doomLevels.getOrDefault(beaconLevel, beaconLevel + 6);
+        // 彩蛋信标（等级6）固定映射到灾厄等级6，确保触发彩蛋袭击
+        int doomLevel = beaconLevel == BeaconLevel.EASTER_EGG.getLevel()
+            ? BeaconLevel.EASTER_EGG.getLevel()
+            : doomLevels.getOrDefault(beaconLevel, beaconLevel + 6);
         int duration = (doomBeaconConfig != null ? doomBeaconConfig.getDoomEffectDuration() : 300) * 20;
 
         effectManager.applyDoomEffect(player, beaconLevel, duration);

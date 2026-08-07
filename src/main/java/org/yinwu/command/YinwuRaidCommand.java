@@ -34,8 +34,14 @@ public class YinwuRaidCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // 无参数 - 显示帮助信息
-        if (args.length == 0) {
+        // 权限检查
+        if (!sender.hasPermission("yinwu.raid.use")) {
+            sender.sendMessage("§c[灾厄袭击] §7你没有权限使用此命令！");
+            return true;
+        }
+
+        // 无参数或 help - 显示帮助信息
+        if (args.length == 0 || args[0].equalsIgnoreCase("help")) {
             sendHelpMessage(sender);
             return true;
         }
@@ -47,8 +53,8 @@ public class YinwuRaidCommand implements CommandExecutor, TabCompleter {
             return handleReload(sender);
         }
 
-        // giveitem 子命令
-        if (subCommand.equals("giveitem")) {
+        // give 子命令
+        if (subCommand.equals("give")) {
             return handleGiveItem(sender, args);
         }
 
@@ -58,7 +64,7 @@ public class YinwuRaidCommand implements CommandExecutor, TabCompleter {
         }
 
         // 未知子命令
-        sender.sendMessage("§c[灾厄袭击] §7未知命令！使用 §e/yinwuraid §7查看帮助");
+        sender.sendMessage("§c[灾厄袭击] §7未知命令！使用 §e/yinwuraid help §7查看帮助");
         return true;
     }
 
@@ -67,7 +73,7 @@ public class YinwuRaidCommand implements CommandExecutor, TabCompleter {
      */
     private boolean handleReload(CommandSender sender) {
         // 检查权限
-        if (!sender.hasPermission("yinwuraid.admin.reload")) {
+        if (!sender.hasPermission("yinwu.raid.admin")) {
             sender.sendMessage("§c[灾厄袭击] §7你没有权限执行此命令！");
             return true;
         }
@@ -123,37 +129,35 @@ public class YinwuRaidCommand implements CommandExecutor, TabCompleter {
 
 
     /**
-     * 处理 giveitem 命令
+     * 处理 give 命令
      */
     private boolean handleGiveItem(CommandSender sender, String[] args) {
         // 检查权限
-        if (!sender.hasPermission("yinwuraid.admin.giveitem")) {
+        if (!sender.hasPermission("yinwu.raid.admin")) {
             sender.sendMessage("§c[灾厄袭击] §7你没有权限执行此命令！");
             return true;
         }
 
-        // 必须是玩家
-        if (!(sender instanceof Player)) {
-            sender.sendMessage("§c[灾厄袭击] §7此命令只能由玩家执行！");
+        // 解析目标玩家（支持控制台指定玩家）
+        if (args.length < 3) {
+            sender.sendMessage("§c[灾厄袭击] §7用法：/yinwuraid give <玩家> <物品ID> [数量]");
+            sender.sendMessage("§7示例：/yinwuraid give qumingjam SEED1 5");
             return true;
         }
 
-        Player player = (Player) sender;
-
-        // 检查参数
-        if (args.length < 2) {
-            player.sendMessage("§c[灾厄袭击] §7用法：/yinwuraid giveitem <物品ID> [数量]");
-            player.sendMessage("§7示例：/yinwuraid giveitem NETHER_STAR 5");
+        Player player = org.bukkit.Bukkit.getPlayer(args[1]);
+        if (player == null) {
+            sender.sendMessage("§c[灾厄袭击] §7玩家未找到：" + args[1]);
             return true;
         }
 
-        String itemName = args[1].toUpperCase();
+        String itemName = args[2].toUpperCase();
         int amount = 1;
 
         // 解析数量
-        if (args.length >= 3) {
+        if (args.length >= 4) {
             try {
-                amount = Integer.parseInt(args[2]);
+                amount = Integer.parseInt(args[3]);
                 if (amount <= 0 || amount > 64) {
                     player.sendMessage("§c[灾厄袭击] §7数量必须在 1-64 之间！");
                     return true;
@@ -246,7 +250,7 @@ public class YinwuRaidCommand implements CommandExecutor, TabCompleter {
      */
     private boolean handleDebug(CommandSender sender, String[] args) {
         // 检查权限
-        if (!sender.hasPermission("yinwuraid.admin.debug")) {
+        if (!sender.hasPermission("yinwu.raid.admin")) {
             sender.sendMessage("§c[灾厄袭击] §7你没有权限执行此命令！");
             return true;
         }
@@ -594,17 +598,11 @@ public class YinwuRaidCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage("§a━━━━━━━━━━━━━━━━");
         sender.sendMessage("§6§l[YinwuRaid] §e灾厄袭击插件 v" + plugin.getDescription().getVersion());
         sender.sendMessage("§a━━━━━━━━━━━━━━━━");
-        sender.sendMessage("§e/yinwuraid §7- 显示此帮助信息");
+        sender.sendMessage("§e/yinwuraid help §7- 显示此帮助信息");
 
-        if (sender.hasPermission("yinwuraid.admin.reload")) {
+        if (sender.hasPermission("yinwu.raid.admin")) {
             sender.sendMessage("§e/yinwuraid reload §7- 重新加载配置文件");
-        }
-
-        if (sender.hasPermission("yinwuraid.admin.giveitem")) {
-            sender.sendMessage("§e/yinwuraid giveitem <物品> [数量] §7- 给予测试物品");
-        }
-
-        if (sender.hasPermission("yinwuraid.admin.debug")) {
+            sender.sendMessage("§e/yinwuraid give <玩家> <物品ID> [数量] §7- 给予测试物品");
             sender.sendMessage("§e/yinwuraid debug §7- 显示调试信息");
         }
 
@@ -621,47 +619,51 @@ public class YinwuRaidCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             // 子命令补全
             List<String> subCommands = new ArrayList<>();
+            subCommands.add("help");
             subCommands.add("reload");
-            subCommands.add("giveitem");
+            subCommands.add("give");
             subCommands.add("debug");
 
             for (String subCommand : subCommands) {
                 if (subCommand.startsWith(args[0].toLowerCase())) {
                     // 检查权限
-                    if (subCommand.equals("reload") && !sender.hasPermission("yinwuraid.admin.reload")) {
-                        continue;
-                    }
-                    if (subCommand.equals("giveitem") && !sender.hasPermission("yinwuraid.admin.giveitem")) {
-                        continue;
-                    }
-                    if (subCommand.equals("debug") && !sender.hasPermission("yinwuraid.admin.debug")) {
+                    if (!subCommand.equals("help") && !sender.hasPermission("yinwu.raid.admin")) {
                         continue;
                     }
                     completions.add(subCommand);
                 }
             }
-        } else if (args.length == 2 && args[0].equalsIgnoreCase("giveitem")) {
+        } else if (args.length == 2 && args[0].equalsIgnoreCase("give")) {
+            // 玩家名补全
+            if (sender.hasPermission("yinwu.raid.admin")) {
+                for (Player p : org.bukkit.Bukkit.getOnlinePlayers()) {
+                    if (p.getName().toLowerCase().startsWith(args[1].toLowerCase())) {
+                        completions.add(p.getName());
+                    }
+                }
+            }
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("give")) {
             // 物品名称补全
-            if (sender.hasPermission("yinwuraid.admin.giveitem")) {
+            if (sender.hasPermission("yinwu.raid.admin")) {
                 List<String> items = Arrays.asList(
                     "SEED1", "SEED2",
                     "DISASTER_SEED_1", "DISASTER_SEED_2"
                 );
 
                 for (String item : items) {
-                    if (item.startsWith(args[1].toUpperCase())) {
+                    if (item.startsWith(args[2].toUpperCase())) {
                         completions.add(item);
                     }
                 }
             }
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("giveitem")) {
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("give")) {
             // 数量补全
-            if (sender.hasPermission("yinwuraid.admin.giveitem")) {
+            if (sender.hasPermission("yinwu.raid.admin")) {
                 completions.addAll(Arrays.asList("1", "5", "10", "16", "32", "64"));
             }
         } else if (args.length == 2 && args[0].equalsIgnoreCase("debug")) {
             // debug 子命令补全
-            if (sender.hasPermission("yinwuraid.admin.debug")) {
+            if (sender.hasPermission("yinwu.raid.admin")) {
                 List<String> debugCommands = Arrays.asList("info", "config", "stats", "beacon", "spawn", "trigger", "reloadbeacon");
 
                 for (String debugCmd : debugCommands) {

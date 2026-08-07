@@ -913,7 +913,10 @@ public class SpecialRaidListener implements Listener {
             plugin.getLogger().info("§e[DEBUG] [SpecialRaidListener] startRaidScheduler: 玩家=" + player.getName() + ", 灾厄等级=" + doomLevel + ", 中心=(" + center.getBlockX() + "," + center.getBlockY() + "," + center.getBlockZ() + "), 总波次=" + raidState.totalWaves + ", 每波怪物数=" + raidState.mobsPerWave);
         }
 
-        List<String> mobTypes = mobManager.getRaidMobs().get(doomLevel);
+        // 彩蛋级灾厄：只刷史莱姆和苦力怕（兜底，不依赖配置）
+        List<String> mobTypes = doomLevel == EASTER_EGG_LEVEL
+            ? List.of("SLIME", "CREEPER")
+            : mobManager.getRaidMobs().get(doomLevel);
 
         if (mobTypes == null || mobTypes.isEmpty()) {
             plugin.getLogger().warning(String.format("§c\u2717 未找到灾厄等级 %d 的生物列表，袭击无法开始！", doomLevel));
