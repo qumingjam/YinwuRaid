@@ -1,7 +1,7 @@
 # YinwuRaid — Yinwu灾厄袭击
 # YinwuRaid — Raid System
 
-**最新版本：v1.2.1** | [下载 Release](https://github.com/qumingjam/YinwuRaid/releases/tag/v1.2.1)
+**最新版本：v1.2.2** | [下载 Release](https://github.com/qumingjam/YinwuRaid/releases/tag/v1.2.2)
 
 Multi-wave calamity raid system triggered by high-level Bad Omen effects.
 
