@@ -18,14 +18,14 @@ public class RaidScheduler {
     private final Map<UUID, Long> playerCooldowns = new ConcurrentHashMap<>();
 
     /** 灾厄效果检测任务 — 全局唯一，去重后复用，插件禁用时取消 */
-    private io.papermc.paper.threadedregions.scheduler.ScheduledTask doomDetectionTask;
+    private volatile io.papermc.paper.threadedregions.scheduler.ScheduledTask doomDetectionTask;
 
     public RaidScheduler(YinwuRaidPlugin plugin, SpecialRaidListener listener) {
         this.plugin = plugin; this.listener = listener;
         this.configManager = plugin.getConfigManager();
     }
 
-    public void startDoomDetectionTask() {
+    public synchronized void startDoomDetectionTask() {
         // 去重：已有活跃任务则不重复启动（每次右键信标都会调用 setBeaconLocation）
         if (doomDetectionTask != null && !doomDetectionTask.isCancelled()) {
             return;

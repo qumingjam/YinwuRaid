@@ -9,7 +9,7 @@
   <groupId>org.yinwu</groupId>
   <artifactId>YinwuRaid</artifactId>
   <name>YinwuRaid</name>
-  <version>1.2.1</version>
+  <version>1.2.2</version>
   <description>Folia-compatible inverted beacon and special raid plugin</description>
   <build>
     <defaultGoal>clean package</defaultGoal>

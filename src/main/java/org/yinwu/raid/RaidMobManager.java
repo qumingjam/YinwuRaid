@@ -74,12 +74,6 @@ public class RaidMobManager {
     // 苦力怕检测偏移量
     private final Map<UUID, Integer> creeperCheckOffset = new ConcurrentHashMap<>();
 
-    // 灾厄生物生成位置缓存
-    private final Map<String, Location> spawnLocationCache = new ConcurrentHashMap<>();
-
-    // 缓存位置的方块状态记录
-    private final Map<String, String> cachedBlockStates = new ConcurrentHashMap<>();
-
     // 缓存配置值
     private double beaconDefenderFollowRange = 64.0;
     private double otherMobFollowRange = 48.0;
@@ -163,8 +157,6 @@ public class RaidMobManager {
         lastTargetSearchTime.clear();
         creeperCheckOffset.clear();
         cachedFollowRanges.clear();
-        spawnLocationCache.clear();
-        cachedBlockStates.clear();
         villagerCountCache.clear();
         raidMobs.clear();
         eliteMobs.clear();
@@ -319,6 +311,9 @@ public class RaidMobManager {
     );
 
     public int getMobsPerWave(int doomLevel) {
+        // 优先读 raid/config.yml 的 wave-settings.mobs-per-wave 配置
+        org.yinwu.config.WaveConfig waveConfig = configManager.getWaveConfig();
+        if (waveConfig != null) return waveConfig.getMobsPerWave(doomLevel);
         return mobsPerWave.getOrDefault(doomLevel, 10);
     }
 
@@ -634,9 +629,7 @@ public class RaidMobManager {
     public void setSpawnLocationDebug(boolean val) { this.spawnLocationDebug = val; }
     public void setCreeperDetectionDebug(boolean val) { this.creeperDetectionDebug = val; }
 
-    public void clearSpawnLocationCache(Location loc) {}
     public Location findValidSpawnLocation(Location center, int radius) { return spawner != null ? spawner.findValidSpawnLocation(center, radius) : null; }
     public Location findValidGolemSpawnLocation(Location center, int radius) { return findValidSpawnLocation(center, radius); }
     public void spawnWaveMobs(Location center, int doomLevel, int radius, java.util.List<String> mobTypes, RaidState raidState) { if (spawner != null) spawner.spawnWaveMobs(center, doomLevel, radius, mobTypes, raidState); }
-    public void triggerManualCreeperCheck(Location loc) {}
 }

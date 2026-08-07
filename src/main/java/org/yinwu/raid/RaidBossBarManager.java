@@ -108,26 +108,6 @@ public class RaidBossBarManager {
     }
 
     /**
-     * 启动怪物死亡检测任务
-     */
-    public void startDeathDetectionTask(BossBar bossBar, int totalMobs) {
-        if (plugin.getConfigManager().isDebugEnabled()) {
-            plugin.getLogger().info(String.format("§e[DEBUG] [RaidBossBarManager] startDeathDetectionTask - totalMobs=%d", totalMobs));
-        }
-
-        Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, (task) -> {
-            // 利用 Set 大小直接统计（实体死亡事件维护 activeRaidMobs）
-            int aliveCount = mobManager.getActiveRaidMobs().size();
-            updateBossBar(bossBar, totalMobs, aliveCount);
-
-            if (aliveCount == 0) {
-                removeBossBar(bossBar);
-                task.cancel();
-            }
-        }, 20L, 40L);
-    }
-
-    /**
      * 检查是否所有怪物都已死亡
      */
     public boolean areAllMobsDead() {

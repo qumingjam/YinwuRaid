@@ -68,6 +68,12 @@ public class BeaconInteractionListener implements Listener {
         this.seedManager.setEnchantAPI(enchantAPI);
     }
 
+    /** 玩家退出时清理信标等级缓存（防无界增长） */
+    @EventHandler
+    public void onPlayerQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        playerBeaconLevels.remove(event.getPlayer().getUniqueId());
+    }
+
     // ==================== 事件：玩家交互 ====================
 
     @EventHandler

@@ -406,12 +406,15 @@ public class YinwuRaidCommand implements CommandExecutor, TabCompleter {
             org.bukkit.Location lastBeacon = plugin.getBeaconDetector().getLastDetectedBeacon();
             if (lastBeacon != null) {
                 sender.sendMessage("§e信标位置: §f" + formatLocation(lastBeacon));
-
-                int beaconLevel = plugin.getBeaconDetector().getBeaconLevel(lastBeacon);
-                sender.sendMessage("§e信标等级: §f" + beaconLevel + (org.yinwu.enums.BeaconLevel.fromInt(beaconLevel).isEasterEgg() ? " (§d彩蛋级§f)" : ""));
-
-                boolean hasContainer = plugin.getBeaconDetector().hasContainerBelowBeacon(lastBeacon);
-                sender.sendMessage("§e容器底座: §f" + (hasContainer ? "§a存在" : "§c缺失"));
+                final org.bukkit.Location beaconLoc = lastBeacon.clone();
+                final CommandSender commandSender = sender;
+                // Folia R6：方块读取在信标所属区域线程执行，再回传结果（避免命令线程跨区域读）
+                plugin.getServer().getRegionScheduler().run(plugin, beaconLoc, (task) -> {
+                    int beaconLevel = plugin.getBeaconDetector().getBeaconLevel(beaconLoc);
+                    commandSender.sendMessage("§e信标等级: §f" + beaconLevel + (org.yinwu.enums.BeaconLevel.fromInt(beaconLevel).isEasterEgg() ? " (§d彩蛋级§f)" : ""));
+                    boolean hasContainer = plugin.getBeaconDetector().hasContainerBelowBeacon(beaconLoc);
+                    commandSender.sendMessage("§e容器底座: §f" + (hasContainer ? "§a存在" : "§c缺失"));
+                });
             } else {
                 sender.sendMessage("§e信标状态: §c未检测到信标");
                 sender.sendMessage("§7请搭建灾厄信标结构后右键信标");

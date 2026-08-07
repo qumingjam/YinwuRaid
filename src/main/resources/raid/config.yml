@@ -176,15 +176,23 @@ raid-loot:
 wave-settings:
   # 波次偏移量
   wave-offset: 5
-  
+
   # ✅ 彩蛋级波次数
   easter-egg-waves: 1
-  
+
   # 波次间隔（tick）
   wave-delay: 200
-  
+
   # 怪物生成间隔（tick）
   mob-interval: 40
+
+  # 每波怪物数（按灾厄等级 6-10）
+  mobs-per-wave:
+    6: 15
+    7: 10
+    8: 15
+    9: 20
+    10: 25
 
 # ============================================
 # 精英配置
@@ -205,6 +213,18 @@ elite-settings:
   
   # 精英体型倍数
   scale-multiplier: 1.5
+
+  # 精英加成（代码读取段）
+  bonuses:
+    health-multiplier: 2.0
+    damage-multiplier: 1.5
+    scale-multiplier: 1.5
+
+  # 灾厄首领（最后一波生成）
+  boss:
+    enabled: true
+    type: WARDEN
+    health-multiplier: 5.0
 
 # ============================================
 # 灾厄等级配置

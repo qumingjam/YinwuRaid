@@ -10,7 +10,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import net.yinwu.lib.api.ForgeAPI;
 import org.yinwu.YinwuRaidPlugin;
 import org.yinwu.config.ConfigManager;
 import org.yinwu.config.EnhancementConfig;
@@ -34,7 +33,7 @@ public class RaidLootManager {
     private final YinwuRaidPlugin plugin;
     private final ConfigManager configManager;
     private final SpecialRaidListener listener;
-    private ForgeAPI forgeAPI;
+    private volatile boolean forgeLinked = false;
 
     // 战利品配置缓存
     private int emeraldBaseAmount = 10;
@@ -67,9 +66,9 @@ public class RaidLootManager {
         }
     }
 
-    /** 设置 ForgeAPI 以掉落可锻造材料 */
-    public void setForgeAPI(ForgeAPI api) {
-        this.forgeAPI = api;
+    /** 标记 Forge 联动可用（袭击掉落可锻造材料） */
+    public void setForgeLinked(boolean linked) {
+        this.forgeLinked = linked;
     }
 
     public void reloadLootConfig() {
@@ -254,7 +253,7 @@ public class RaidLootManager {
         }
 
         // Raid ↔ Forge 联动：当 YinwuForge 存在时，额外掉落锻造材料
-        if (forgeAPI != null && doomLevel >= 7) {
+        if (forgeLinked && doomLevel >= 7) {
             if (doomLevel >= 9) {
                 loot.add(new ItemStack(Material.NETHERITE_INGOT, 1 + rng.nextInt(2)));   // 高难掉落下界合金
             }
@@ -303,7 +302,7 @@ public class RaidLootManager {
         }
 
         // Raid ↔ Forge 联动：当 YinwuForge 存在时，额外掉落锻造材料（全场一次）
-        if (forgeAPI != null && doomLevel >= 7) {
+        if (forgeLinked && doomLevel >= 7) {
             if (doomLevel >= 9) {
                 loot.add(new ItemStack(Material.NETHERITE_INGOT, 1 + rng.nextInt(2)));
             }

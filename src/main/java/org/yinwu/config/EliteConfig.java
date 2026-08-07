@@ -9,6 +9,9 @@ public class EliteConfig {
     private double healthMultiplier;
     private double damageMultiplier;
     private double scaleMultiplier;
+    private boolean bossEnabled = true;
+    private String bossType = "WARDEN";
+    private double bossHealthMultiplier = 5.0;
 
     public Map<Integer, Double> getChances() { return chances; }
     public void setChances(Map<Integer, Double> chances) { this.chances = chances; }
@@ -18,6 +21,9 @@ public class EliteConfig {
     public void setDamageMultiplier(double damageMultiplier) { this.damageMultiplier = damageMultiplier; }
     public double getScaleMultiplier() { return scaleMultiplier; }
     public void setScaleMultiplier(double scaleMultiplier) { this.scaleMultiplier = scaleMultiplier; }
+    public boolean isBossEnabled() { return bossEnabled; }
+    public String getBossType() { return bossType; }
+    public double getBossHealthMultiplier() { return bossHealthMultiplier; }
 
     /** 从 raid/config.yml elite-settings 段加载 */
     public static EliteConfig from(ConfigurationSection s) {
@@ -42,6 +48,12 @@ public class EliteConfig {
             c.setHealthMultiplier(bn.getDouble("health-multiplier", 1.5));
             c.setDamageMultiplier(bn.getDouble("damage-multiplier", 1.3));
             c.setScaleMultiplier(bn.getDouble("scale-multiplier", 1.8));
+        }
+        ConfigurationSection boss = s.getConfigurationSection("boss");
+        if (boss != null) {
+            c.bossEnabled = boss.getBoolean("enabled", true);
+            c.bossType = boss.getString("type", "WARDEN");
+            c.bossHealthMultiplier = boss.getDouble("health-multiplier", 5.0);
         }
         return c;
     }

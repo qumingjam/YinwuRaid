@@ -72,12 +72,12 @@ public class YinwuRaidPlugin extends YinwuPlugin {
     }
 
     private void tryForgeLink() {
-        var forge = Bukkit.getServicesManager().load(net.yinwu.lib.api.ForgeAPI.class);
-        if (forge != null) {
+        org.yinwu.util.ForgeBridge.init();
+        if (org.yinwu.util.ForgeBridge.isAvailable()) {
             getLogger().info("§a✓ 检测到 YinwuForge —— 袭击奖励将包含可锻造材料");
             // 给 loot 系统注入 forge 材料掉落
             if (specialRaidListener != null) {
-                specialRaidListener.getLootManager().setForgeAPI(forge);
+                specialRaidListener.getLootManager().setForgeLinked(true);
             }
         }
     }
@@ -111,6 +111,9 @@ public class YinwuRaidPlugin extends YinwuPlugin {
 
         // Rule 8：反注册本插件所有监听器，避免重载时重复注册
         HandlerList.unregisterAll(this);
+
+        // 清除静态单例引用，避免 reload 后 getInstance() 返回旧实例
+        instance = null;
 
         getLogger().info("§6[YinwuRaid] §c插件已安全禁用");
     }

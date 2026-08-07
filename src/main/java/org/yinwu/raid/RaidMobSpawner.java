@@ -1,17 +1,21 @@
 package org.yinwu.raid;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Mob;
 import org.bukkit.entity.Villager;
+import org.bukkit.persistence.PersistentDataType;
 import org.yinwu.YinwuRaidPlugin;
 import org.yinwu.config.ConfigManager;
 import org.yinwu.util.MythicMobsIntegration;
 
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class RaidMobSpawner {
@@ -26,18 +30,74 @@ public class RaidMobSpawner {
         this.configManager = plugin.getConfigManager(); this.mythicMobs = mythicMobs;
     }
 
-    public LivingEntity spawnRaidMob(Location center, int doomLevel, int wave, int totalWaves, int villageRadius) {
+    public LivingEntity spawnRaidMob(Location center, int doomLevel, int wave, int totalWaves, int villageRadius,
+                                     java.util.List<String> mobTypes) {
         Location loc = findValidSpawnLocation(center, villageRadius);
         if (loc == null) return null;
-        EntityType type = selectMobType(doomLevel, wave);
+
+        // 精英判定：掷精英概率，命中则从精英表选怪（elite-mobs 配置了才生效）
+        boolean elite = false;
+        List<String> elitePool = mobManager.getEliteMobs().get(doomLevel);
+        if (elitePool != null && !elitePool.isEmpty()) {
+            double chance = mobManager.getEliteChances().getOrDefault(doomLevel, 0.15);
+            elite = ThreadLocalRandom.current().nextDouble() < chance;
+        }
+        List<String> pool = elite ? elitePool : mobTypes;
+        if (pool == null || pool.isEmpty()) {
+            // 配置缺失时回退到写死的兜底类型
+            pool = java.util.List.of(selectMobType(doomLevel, wave).name());
+        }
+
+        String entry = pool.get(ThreadLocalRandom.current().nextInt(pool.size()));
         World w = loc.getWorld();
-        LivingEntity entity = (LivingEntity) w.spawnEntity(loc, type);
+
+        LivingEntity entity = null;
+        if (entry.startsWith("mythicmob:")) {
+            String id = entry.substring("mythicmob:".length()).trim();
+            if (!id.isEmpty() && mythicMobs != null) {
+                entity = mythicMobs.spawnMythicMob(id, loc);
+            }
+            if (entity == null) {
+                entity = spawnVanilla(loc, selectMobType(doomLevel, wave));
+            }
+        } else {
+            entity = spawnVanilla(loc, parseType(entry, doomLevel, wave));
+        }
+
         if (entity != null) {
             entity.setPersistent(true); // 防止远离玩家时被原版卸载/消失，保持计数准确
             mobManager.trackMob(entity);
             applyWaveScaling(entity, doomLevel, wave, totalWaves);
+            if (elite) {
+                double hpMult = mobManager.getEliteHealthMultiplier();
+                entity.setMaxHealth(entity.getMaxHealth() * hpMult);
+                entity.setHealth(entity.getMaxHealth());
+                // 精英伤害加成（通过攻击力属性生效）
+                var dmgAttr = entity.getAttribute(org.bukkit.attribute.Attribute.ATTACK_DAMAGE);
+                if (dmgAttr != null) {
+                    dmgAttr.setBaseValue(dmgAttr.getBaseValue() * mobManager.getEliteDamageMultiplier());
+                }
+            }
         }
         return entity;
+    }
+
+    /** 生成原版实体（类型解析失败或生成异常时返回 null） */
+    private LivingEntity spawnVanilla(Location loc, EntityType type) {
+        try {
+            return (LivingEntity) loc.getWorld().spawnEntity(loc, type);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** 解析怪物表条目为 EntityType，非法条目回退写死兜底 */
+    private EntityType parseType(String entry, int doomLevel, int wave) {
+        try {
+            return EntityType.valueOf(entry.toUpperCase().replace(" ", "_"));
+        } catch (IllegalArgumentException e) {
+            return selectMobType(doomLevel, wave);
+        }
     }
 
     /**
@@ -55,6 +115,8 @@ public class RaidMobSpawner {
             int z = cz + ThreadLocalRandom.current().nextInt(-ringMax, ringMax + 1);
             int dx = x - cx, dz = z - cz;
             if (dx * dx + dz * dz < ringMin * ringMin) continue; // 拒绝村庄内
+            // Folia：候选点不在当前区域则跳过（避免 getHighestBlockYAt 跨区域读）
+            if (!Bukkit.isOwnedByCurrentRegion(new Location(w, x + 0.5, 0, z + 0.5))) continue;
             int y = w.getHighestBlockYAt(x, z);
             if (y > -64 && y < 320) {
                 Location loc = new Location(w, x + 0.5, y + 1, z + 0.5);
@@ -122,7 +184,7 @@ public class RaidMobSpawner {
         }
         for (int i = 0; i < raidState.mobsPerWave; i++) {
             try {
-                LivingEntity mob = spawnRaidMob(center, doomLevel, raidState.currentWave, raidState.totalWaves, radius);
+                LivingEntity mob = spawnRaidMob(center, doomLevel, raidState.currentWave, raidState.totalWaves, radius, mobTypes);
                 if (mob != null) {
                     setRaidTarget(mob, villageTarget);
                     registerRaidMob(mob, raidState);
@@ -131,8 +193,55 @@ public class RaidMobSpawner {
                 plugin.getLogger().fine("§e⚠ 袭击怪生成失败：" + e.getMessage());
             }
         }
+        // R10：最后一波生成 Boss
+        if (raidState.currentWave >= raidState.totalWaves) {
+            spawnBoss(center, doomLevel, radius, raidState);
+        }
+
         // 记录本波实际生成数（含幻术师），供 BossBar 剩余分母使用
         raidState.waveMobCount = raidState.spawnedThisWave;
+    }
+
+    /** R10：最后一波生成灾厄首领，标记 raid_boss PDC（供 isRaidBoss 查询） */
+    private void spawnBoss(Location center, int doomLevel, int radius, RaidState raidState) {
+        org.yinwu.config.EliteConfig elite = configManager.getEliteConfig();
+        if (elite == null || !elite.isBossEnabled()) return;
+
+        Location loc = findValidSpawnLocation(center, radius);
+        if (loc == null) return;
+
+        LivingEntity boss = null;
+        String type = elite.getBossType();
+        if (type != null && type.startsWith("mythicmob:")) {
+            String id = type.substring("mythicmob:".length()).trim();
+            if (mythicMobs != null) boss = mythicMobs.spawnMythicMob(id, loc);
+        } else {
+            try {
+                boss = (LivingEntity) loc.getWorld().spawnEntity(loc, EntityType.valueOf(type.toUpperCase()));
+            } catch (Exception ignored) {
+                boss = null;
+            }
+        }
+        if (boss == null) return;
+
+        // 血量：基础 × 末波高缩放 × boss 倍率
+        double scale = 1.0 + (doomLevel - 6) * 0.2 + 1.0;
+        boss.setMaxHealth(boss.getMaxHealth() * scale * elite.getBossHealthMultiplier());
+        boss.setHealth(boss.getMaxHealth());
+        boss.setPersistent(true);
+        boss.setGlowing(true);
+        boss.setCustomName("§c§l灾厄首领");
+        boss.setCustomNameVisible(true);
+        boss.getPersistentDataContainer().set(new NamespacedKey(plugin, "raid_boss"),
+            PersistentDataType.BYTE, (byte) 1);
+
+        mobManager.trackMob(boss);
+        registerRaidMob(boss, raidState);
+        setRaidTarget(boss, findNearestVillager(center, radius));
+        if (listener != null) {
+            listener.getDefenderManager().startHealthDisplay(boss);
+        }
+        plugin.getLogger().fine("§c✝ 灾厄首领已降临！类型=" + type + ", 位置=(" + loc.getBlockX() + "," + loc.getBlockY() + "," + loc.getBlockZ() + ")");
     }
 
     /**
@@ -144,5 +253,9 @@ public class RaidMobSpawner {
         raidState.raidMobs.add(mob.getUniqueId());
         raidState.aliveMobs.incrementAndGet();
         raidState.spawnedThisWave++;
+        // R7：启动怪物血量显示
+        if (listener != null) {
+            listener.getDefenderManager().startHealthDisplay(mob);
+        }
     }
 }

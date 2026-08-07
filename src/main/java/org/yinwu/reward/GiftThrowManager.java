@@ -193,11 +193,11 @@ public class GiftThrowManager {
 
         villager.getWorld().spawnParticle(Particle.HAPPY_VILLAGER, dropLoc, 2, 0.2, 0.2, 0.2, 0.01);
 
-        Bukkit.getRegionScheduler().run(plugin, player.getLocation(), (t) -> {
+        player.getScheduler().run(plugin, (t) -> {
             if (!player.isOnline()) return;
 
             player.sendActionBar(net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize("§a✓ 村民赠送了礼物：" + reward.getItemMeta().getDisplayName()));
-        });
+        }, null);
     }
 
     /**

@@ -63,6 +63,11 @@ public class RaidDefenderManager {
                 normalGolemFollowRange = followRanges.getOrDefault("normal-golem", 64.0);
             }
         }
+        // R12：信标守卫体型倍数读配置
+        org.yinwu.config.BeaconDefenderConfig defenderConfig = configManager.getBeaconDefenderConfig();
+        if (defenderConfig != null) {
+            this.defenderScaleMultiplier = defenderConfig.getScaleMultiplier();
+        }
     }
 
     /**
@@ -105,6 +110,39 @@ public class RaidDefenderManager {
         if (plugin.getConfigManager().isDebugEnabled()) {
             plugin.getLogger().info("§e[DEBUG] [RaidDefenderManager] cleanup: 铁傀儡任务=" + golemTaskCount + ", 血量任务=" + healthTaskCount + ", 总共取消=" + cleanedTasks + "个任务");
         }
+    }
+
+    // ============== 怪物血量显示 ==============
+
+    /**
+     * 启动怪物血量显示任务（每 20 tick 更新自定义名显示血量百分比）。
+     * 任务注册进 activeHealthTasks，死亡时由 onEntityDeath 取消。
+     */
+    public void startHealthDisplay(LivingEntity mob) {
+        UUID uuid = mob.getUniqueId();
+        if (activeHealthTasks.containsKey(uuid)) return;
+        String baseName = "§4§l灾厄" + mobManager.getMobNames().getOrDefault(
+            mob.getType().name(), mob.getType().name());
+        io.papermc.paper.threadedregions.scheduler.ScheduledTask task =
+            mob.getScheduler().runAtFixedRate(plugin, (t) -> {
+                if (mob.isDead() || !mob.isValid()) {
+                    activeHealthTasks.remove(uuid);
+                    t.cancel();
+                    return;
+                }
+                double max = mob.getMaxHealth();
+                double hp = mob.getHealth();
+                int pct = max > 0 ? (int) Math.round(hp / max * 100) : 0;
+                mob.setCustomName(baseName + " §7| §c♥ " + pct + "%");
+                mob.setCustomNameVisible(true);
+            }, null, 1L, 20L);
+        activeHealthTasks.put(uuid, task);
+    }
+
+    /** 停止怪物血量显示任务（幂等） */
+    public void stopHealthDisplay(UUID uuid) {
+        io.papermc.paper.threadedregions.scheduler.ScheduledTask task = activeHealthTasks.remove(uuid);
+        if (task != null && !task.isCancelled()) task.cancel();
     }
 
     // ============== 访问器 ==============
@@ -359,7 +397,7 @@ public class RaidDefenderManager {
                 followRangeAttr.setBaseValue(giantGolemFollowRange);
             }
 
-            Bukkit.getGlobalRegionScheduler().runAtFixedRate(plugin, (t) -> {
+            golem.getScheduler().runAtFixedRate(plugin, (t) -> {
                 if (golem.isDead() || !golem.isValid()) {
                     t.cancel();
                     return;
@@ -398,7 +436,7 @@ public class RaidDefenderManager {
                         ((org.bukkit.entity.Mob) golem).setTarget(raidTarget);
                     }
                 });
-            }, 40L, 80L);
+            }, null, 40L, 80L);
         });
     }
 }
