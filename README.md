@@ -1,7 +1,7 @@
 # YinwuRaid — Yinwu灾厄袭击
 # YinwuRaid — Raid System
 
-**最新版本：v1.2.2** | [下载 Release](https://github.com/qumingjam/YinwuRaid/releases/tag/v1.2.2)
+**最新版本：v1.2.3** | [下载 Release](https://github.com/qumingjam/YinwuRaid/releases/tag/v1.2.3)
 
 Multi-wave calamity raid system triggered by high-level Bad Omen effects.
 
@@ -26,7 +26,7 @@ Multi-wave calamity raid system triggered by high-level Bad Omen effects.
 
 ## Quick Start | 快速开始
 
-1. 将 `YinwuRaid-1.2.1.jar` 放入 `plugins/` 目录
+1. 将 `YinwuRaid-1.2.3.jar` 放入 `plugins/` 目录
 2. 重启服务器
 3. 搭建**倒置信标**结构 → 激活灾厄效果
 4. 获得不祥之兆 VI+ 效果 → 自动触发袭击
@@ -67,7 +67,7 @@ cd YinwuRaid
 mvn clean package
 ```
 
-产出：`target/YinwuRaid-1.2.1.jar`
+产出：`target/YinwuRaid-1.2.3.jar`
 
 ---
 
